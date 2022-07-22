@@ -18,10 +18,13 @@
 package org.project.hop.workflow.actions.sample;
 
 import org.apache.hop.core.Const;
+import org.apache.hop.core.Props;
 import org.apache.hop.core.util.Utils;
 import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.i18n.BaseMessages;
 import org.apache.hop.ui.core.gui.WindowProperty;
+import org.apache.hop.ui.core.widget.ControlSpaceKeyAdapter;
+import org.apache.hop.ui.core.widget.TextVar;
 import org.apache.hop.ui.pipeline.transform.BaseTransformDialog;
 import org.apache.hop.ui.workflow.action.ActionDialog;
 import org.apache.hop.ui.workflow.dialog.WorkflowDialog;
@@ -35,23 +38,25 @@ import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.*;
 
-public class TelegramActionDialog extends ActionDialog implements IActionDialog {
-  private static final Class<?> PKG = TelegramActionDialog.class; // Needed by Translator
+public class ActionWriteToTelegramChatDialog extends ActionDialog implements IActionDialog {
+  private static final Class<?> PKG = ActionWriteToTelegramChatDialog.class; // Needed by Translator
 
   private Shell shell;
 
-  private TelegramAction action;
+  private ActionWriteToTelegramChat action;
 
   private boolean changed;
 
   private Text wName;
+  private TextVar wChatId;
+  private TextVar wChatMessage;
 
-  public TelegramActionDialog(
+  public ActionWriteToTelegramChatDialog(
       Shell parent, IAction action, WorkflowMeta workflowMeta, IVariables variables) {
     super(parent, workflowMeta, variables);
-    this.action = (TelegramAction) action;
+    this.action = (ActionWriteToTelegramChat) action;
     if (this.action.getName() == null) {
-      this.action.setName(BaseMessages.getString(PKG, "TelegramAction.Label"));
+      this.action.setName(BaseMessages.getString(PKG, "WriteToTelgramChatAction.Label"));
     }
   }
 
@@ -72,14 +77,27 @@ public class TelegramActionDialog extends ActionDialog implements IActionDialog 
     formLayout.marginHeight = Const.FORM_MARGIN;
 
     shell.setLayout(formLayout);
-    shell.setText(BaseMessages.getString(PKG, "TelegramAction.Title"));
+    shell.setText(BaseMessages.getString(PKG, "WriteToTelgramChatAction.Title"));
 
     int middle = props.getMiddlePct();
     int margin = Const.MARGIN;
 
+
+    Button wOk = new Button(shell, SWT.PUSH);
+    wOk.setText(BaseMessages.getString(PKG, "System.Button.OK"));
+    Button wCancel = new Button(shell, SWT.PUSH);
+    wCancel.setText(BaseMessages.getString(PKG, "System.Button.Cancel"));
+
+    // at the bottom
+    BaseTransformDialog.positionBottomButtons(shell, new Button[] {wOk, wCancel}, margin, wName);
+
+    // Add listeners
+    wCancel.addListener(SWT.Selection, (Event e) -> cancel());
+    wOk.addListener(SWT.Selection, (Event e) -> ok());
+
     // Filename line
     Label wlName = new Label(shell, SWT.RIGHT);
-    wlName.setText(BaseMessages.getString(PKG, "TelegramAction.Label"));
+    wlName.setText(BaseMessages.getString(PKG, "WriteToTelgramChatAction.Label"));
     props.setLook(wlName);
     FormData fdlName = new FormData();
     fdlName.left = new FormAttachment(0, 0);
@@ -95,36 +113,47 @@ public class TelegramActionDialog extends ActionDialog implements IActionDialog 
     fdName.right = new FormAttachment(100, 0);
     wName.setLayoutData(fdName);
 
-    Button wOk = new Button(shell, SWT.PUSH);
-    wOk.setText(BaseMessages.getString(PKG, "System.Button.OK"));
-    Button wCancel = new Button(shell, SWT.PUSH);
-    wCancel.setText(BaseMessages.getString(PKG, "System.Button.Cancel"));
+    // Chat ID
+    Label wlChatId = new Label(shell, SWT.RIGHT);
+    wlChatId.setText(BaseMessages.getString(PKG, "WriteToTelgramChatAction.ChatID.Label"));
+    props.setLook(wlChatId);
+    FormData fdlChatId = new FormData();
+    fdlChatId.left = new FormAttachment(0, 0);
+    fdlChatId.top = new FormAttachment(wName, margin);
+    fdlChatId.right = new FormAttachment(middle, -margin);
+    wlChatId.setLayoutData(fdlChatId);
 
-    // at the bottom
-    BaseTransformDialog.positionBottomButtons(shell, new Button[] {wOk, wCancel}, margin, wName);
+    wChatId = new TextVar(variables, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+    props.setLook(wChatId);
+    wChatId.addModifyListener(lsMod);
+    FormData fdChatId = new FormData();
+    fdChatId.left = new FormAttachment(middle, 0);
+    fdChatId.top = new FormAttachment(wName, margin);
+    fdChatId.right = new FormAttachment(100, 0);
+    wChatId.setLayoutData(fdChatId);
 
-    // Add listeners
-    wCancel.addListener(SWT.Selection, (Event e) -> cancel());
-    wOk.addListener(SWT.Selection, (Event e) -> ok());
+    // Chat message to send
+    Label wlChatMessage = new Label(shell, SWT.RIGHT);
+    wlChatMessage.setText(BaseMessages.getString(PKG, "WriteToTelgramChatAction.ChatMessage.Label"));
+    props.setLook(wlChatMessage);
+    FormData fdlChatMessage = new FormData();
+    fdlChatMessage.left = new FormAttachment(0, 0);
+    fdlChatMessage.top = new FormAttachment(wChatId, margin);
+    fdlChatMessage.right = new FormAttachment(middle, -margin);
+    wlChatMessage.setLayoutData(fdlChatMessage);
 
-    SelectionAdapter lsDef =
-        new SelectionAdapter() {
-          @Override
-          public void widgetDefaultSelected(SelectionEvent e) {
-            ok();
-          }
-        };
-
-    wName.addSelectionListener(lsDef);
-
-    // Detect X or ALT-F4 or something that kills this window...
-    shell.addShellListener(
-        new ShellAdapter() {
-          @Override
-          public void shellClosed(ShellEvent e) {
-            cancel();
-          }
-        });
+    wChatMessage =
+            new TextVar(
+                    variables, shell, SWT.MULTI | SWT.LEFT | SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
+    props.setLook(wChatMessage, Props.WIDGET_STYLE_FIXED);
+    wChatMessage.addModifyListener(lsMod);
+    FormData fdChatMessage = new FormData();
+    fdChatMessage.left = new FormAttachment(middle, 0);
+    fdChatMessage.top = new FormAttachment(wChatId, margin);
+    fdChatMessage.right = new FormAttachment(100, 0);
+    fdChatMessage.bottom = new FormAttachment(wOk, -margin);
+    wChatMessage.setLayoutData(fdChatMessage);
+    wChatMessage.addKeyListener(new ControlSpaceKeyAdapter(variables, wChatMessage));
 
     getData();
 
@@ -147,9 +176,9 @@ public class TelegramActionDialog extends ActionDialog implements IActionDialog 
 
   /** Copy information from the meta-data input to the dialog fields. */
   public void getData() {
-    if (action.getName() != null) {
-      wName.setText(action.getName());
-    }
+    wName.setText(Const.nullToEmpty(action.getName()));
+    wChatId.setText(Const.nullToEmpty(action.getChatId()));
+    wChatMessage.setText(Const.nullToEmpty(action.getChatMessage()));
 
     wName.selectAll();
     wName.setFocus();
@@ -170,6 +199,8 @@ public class TelegramActionDialog extends ActionDialog implements IActionDialog 
       return;
     }
     action.setName(wName.getText());
+    action.setChatId(wChatId.getText());
+    action.setChatMessage(wChatMessage.getText());
     dispose();
   }
 }

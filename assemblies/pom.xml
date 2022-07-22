@@ -8,7 +8,7 @@
   <version>2.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>Hop Assemblies</name>
+  <name>Hop Telegram Plugin Assemblies</name>
 
   <parent>
     <groupId>org.project.hop</groupId>
@@ -21,6 +21,6 @@
   </properties>
 
   <modules>
-    <module>assemblies-telegram-action</module>
+    <module>assemblies-writetotelegramchat-action</module>
   </modules>
 </project>

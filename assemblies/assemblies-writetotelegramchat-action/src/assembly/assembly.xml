@@ -5,7 +5,7 @@
     <formats>
         <format>zip</format>
     </formats>
-    <baseDirectory>plugins/actions/telegram-action</baseDirectory>
+    <baseDirectory>plugins/actions/writetotelegramchat</baseDirectory>
     <files>
         <file>
             <source>${project.basedir}/src/main/resources/version.xml</source>
@@ -25,7 +25,7 @@
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
             <includes>
-                <include>org.project.hop:telegram-action:jar</include>
+                <include>org.project.hop:writetotelegramchat:jar</include>
             </includes>
         </dependencySet>
     </dependencySets>

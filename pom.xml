@@ -35,7 +35,7 @@
     </properties>
 
     <modules>
-        <module>telegram-action</module>
+        <module>writetotelegramchat-action</module>
         <module>assemblies</module>
     </modules>
 

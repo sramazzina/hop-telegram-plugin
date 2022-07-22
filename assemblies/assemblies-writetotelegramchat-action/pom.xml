@@ -9,12 +9,12 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>assemblies-telegram-action</artifactId>
+    <artifactId>writetotelegramchat-assembly</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>org.project.hop</groupId>
-            <artifactId>telegram-action</artifactId>
+            <artifactId>writetotelegramchat</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

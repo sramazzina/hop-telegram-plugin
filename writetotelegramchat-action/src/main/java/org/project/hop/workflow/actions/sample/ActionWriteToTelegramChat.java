@@ -21,6 +21,7 @@ import org.apache.hop.core.ICheckResult;
 import org.apache.hop.core.Result;
 import org.apache.hop.core.annotations.Action;
 import org.apache.hop.core.exception.HopXmlException;
+import org.apache.hop.core.logging.LogLevel;
 import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.core.xml.XmlHandler;
 import org.apache.hop.i18n.BaseMessages;
@@ -34,24 +35,31 @@ import java.util.List;
 
 @Action(
     id = "ACTIONSAMPLE",
-    name = "i18n::TelegramAction.Name",
-    description = "i18n::TelegramAction.Description",
+    name = "i18n::WriteToTelgramChatAction.Name",
+    description = "i18n::WriteToTelgramChatAction.Description",
     image = "telegram.svg",
-    categoryDescription = "Category",
+    categoryDescription = "Telegram.Category",
     documentationUrl = "" /*url to your documentation */)
-public class TelegramAction extends ActionBase implements Cloneable, IAction {
-  private static final Class<?> PKG = TelegramAction.class; // Needed by Translator
+public class ActionWriteToTelegramChat extends ActionBase implements Cloneable, IAction {
 
-  public TelegramAction(String name) {
+  private static final Class<?> PKG = ActionWriteToTelegramChat.class; // Needed by Translator
+
+  private String chatId;
+  private String chatMessage;
+
+  public ActionWriteToTelegramChat(String name) {
     super(name, "");
+
+    chatId = null;
+    chatMessage = null;
   }
 
-  public TelegramAction() {
+  public ActionWriteToTelegramChat() {
     this("");
   }
 
   public Object clone() {
-    TelegramAction c = (TelegramAction) super.clone();
+    ActionWriteToTelegramChat c = (ActionWriteToTelegramChat) super.clone();
     return c;
   }
 
@@ -66,7 +74,8 @@ public class TelegramAction extends ActionBase implements Cloneable, IAction {
 
     retval.append(super.getXml());
     // example value to xml
-    retval.append(XmlHandler.addTagValue("example", "value"));
+    retval.append("      ").append(XmlHandler.addTagValue("chatId", chatId));
+    retval.append("      ").append(XmlHandler.addTagValue("chatMessage", chatMessage));
 
     return retval.toString();
   }
@@ -83,10 +92,11 @@ public class TelegramAction extends ActionBase implements Cloneable, IAction {
       throws HopXmlException {
     try {
       super.loadXml(entrynode);
-      // message = XmlHandler.getTagValue( entrynode, "message" );
+      chatId = XmlHandler.getTagValue(entrynode, "chatId");
+      chatMessage = XmlHandler.getTagValue(entrynode, "chatMessage");
     } catch (Exception e) {
       throw new HopXmlException(
-          BaseMessages.getString(PKG, "TelegramAction.UnableToLoadFromXml.Label"), e);
+          BaseMessages.getString(PKG, "WriteToTelgramChatAction.UnableToLoadFromXml.Label"), e);
     }
   }
 
@@ -117,4 +127,20 @@ public class TelegramAction extends ActionBase implements Cloneable, IAction {
       WorkflowMeta workflowMeta,
       IVariables variables,
       IHopMetadataProvider metadataProvider) {}
+
+  public String getChatId() {
+    return chatId;
+  }
+
+  public void setChatId(String chatId) {
+    this.chatId = chatId;
+  }
+
+  public String getChatMessage() {
+    return chatMessage;
+  }
+
+  public void setChatMessage(String chatMessage) {
+    this.chatMessage = chatMessage;
+  }
 }
