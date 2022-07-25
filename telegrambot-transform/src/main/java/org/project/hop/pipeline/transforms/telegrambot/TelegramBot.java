@@ -64,7 +64,6 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
               + "] couldn't be found in output stream!");
     }
 
-    r[fieldPos] = meta.getSampleText();
 
     putRow(data.outputRowMeta, r); // return your data
     return true;

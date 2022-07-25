@@ -46,16 +46,39 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
   public static final String SAMPLE_TEXT_FIELD_NAME = "Value";
 
   @HopMetadataProperty(
-      key = "sample_text",
-      injectionKeyDescription = "TelegramBot.Injection.SampleText.Description")
-  private String sampleText;
+      injectionKeyDescription = "TelegramBot.Injection.BotToken.Description")
+  private String botToken;
 
-  public String getSampleText() {
-    return sampleText;
+  @HopMetadataProperty(
+      injectionKeyDescription = "TelegramBot.Injection.ChatID.Description")
+  private String chatId;
+
+  @HopMetadataProperty(key = "cmdItem",
+          injectionKeyDescription = "TelegramBot.Injection.ChatID.Description")
+  List<TelegramBotCmdItem> cmdItems;
+
+  public List<TelegramBotCmdItem> getCmdItems() {
+    return cmdItems;
   }
 
-  public void setSampleText(String sampleText) {
-    this.sampleText = sampleText;
+  public void setCmdItems(List<TelegramBotCmdItem> cmdItems) {
+    this.cmdItems = cmdItems;
+  }
+
+  public String getBotToken() {
+    return botToken;
+  }
+
+  public void setBotToken(String botToken) {
+    this.botToken = botToken;
+  }
+
+  public String getChatId() {
+    return chatId;
+  }
+
+  public void setChatId(String chatId) {
+    this.chatId = chatId;
   }
 
   @Override
@@ -91,6 +114,5 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
   @Override
   public void setDefault() {
     // Set default value for new sample text field
-    sampleText = "Hello my name is Apache Hop!";
   }
 }

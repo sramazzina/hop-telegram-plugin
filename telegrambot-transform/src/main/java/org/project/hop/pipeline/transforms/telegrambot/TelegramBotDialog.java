@@ -42,7 +42,8 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
   private static final Class<?> PKG = TelegramBotDialog.class; // Needed by Translator
 
   private final TelegramBotMeta input;
-  private TextVar wSampleTextField;
+  private TextVar wBotToken;
+  private TextVar wChatId;
 
   public TelegramBotDialog(
       Shell parent, IVariables variables, Object in, PipelineMeta pipelineMeta, String sname) {
@@ -97,7 +98,6 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     fdTransformName.width = 150;
     fdTransformName.left = new FormAttachment(0, 0);
     fdTransformName.top = new FormAttachment(wlTransformName, 5);
-    fdTransformName.width = 250;
     wTransformName.setLayoutData(fdTransformName);
 
     Label spacer = new Label(shell, SWT.HORIZONTAL | SWT.SEPARATOR);
@@ -108,33 +108,43 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     fdSpacer.right = new FormAttachment(100, 0);
     spacer.setLayoutData(fdSpacer);
 
-    Label wicon = new Label(shell, SWT.RIGHT);
-    wicon.setImage(getImage());
-    FormData fdlicon = new FormData();
-    fdlicon.top = new FormAttachment(0, 0);
-    fdlicon.right = new FormAttachment(100, 0);
-    fdlicon.bottom = new FormAttachment(spacer, 0);
-    wicon.setLayoutData(fdlicon);
-    props.setLook(wicon);
+    // BotToken
+    Label wlBotToken = new Label(shell, SWT.RIGHT);
+    wlBotToken.setText(BaseMessages.getString(PKG, "TelegramBot.BotToken.Label"));
+    props.setLook(wlBotToken);
+    FormData fdlBotToken = new FormData();
+    fdlBotToken.left = new FormAttachment(0, 0);
+    fdlBotToken.top = new FormAttachment(spacer, margin);
+    fdlBotToken.right = new FormAttachment(middle, -margin);
+    wlBotToken.setLayoutData(fdlBotToken);
 
-    // Add a simple text field
-    Label wlSampleTextFieldLabel = new Label(shell, SWT.RIGHT);
-    wlSampleTextFieldLabel.setText(BaseMessages.getString(PKG, "TelegramBot.SampleText.Label"));
-    props.setLook(wlSampleTextFieldLabel);
-    FormData fdlSampleTextFieldLabel = new FormData();
-    fdlSampleTextFieldLabel.left = new FormAttachment(0, 0);
-    // fdlSampleTextFieldLabel.right = new FormAttachment(middle, -margin);
-    fdlSampleTextFieldLabel.top = new FormAttachment(spacer, margin);
-    wlSampleTextFieldLabel.setLayoutData(fdlSampleTextFieldLabel);
+    wBotToken = new TextVar(variables, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+    props.setLook(wBotToken);
+    wBotToken.addModifyListener(lsMod);
+    FormData fdBotToken = new FormData();
+    fdBotToken.left = new FormAttachment(middle, 0);
+    fdBotToken.top = new FormAttachment(spacer, margin);
+    fdBotToken.right = new FormAttachment(100, 0);
+    wBotToken.setLayoutData(fdBotToken);
 
-    wSampleTextField = new TextVar(variables, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-    props.setLook(wSampleTextField);
-    wSampleTextField.addModifyListener(lsMod);
-    FormData fdSampleTextField = new FormData();
-    fdSampleTextField.left = new FormAttachment(wlSampleTextFieldLabel, margin);
-    fdSampleTextField.top = new FormAttachment(spacer, margin);
-    fdSampleTextField.right = new FormAttachment(100, 0);
-    wSampleTextField.setLayoutData(fdSampleTextField);
+    // Chat ID
+    Label wlChatId = new Label(shell, SWT.RIGHT);
+    wlChatId.setText(BaseMessages.getString(PKG, "TelegramBot.ChatID.Label"));
+    props.setLook(wlChatId);
+    FormData fdlChatId = new FormData();
+    fdlChatId.left = new FormAttachment(0, 0);
+    fdlChatId.top = new FormAttachment(wBotToken, margin);
+    fdlChatId.right = new FormAttachment(middle, -margin);
+    wlChatId.setLayoutData(fdlChatId);
+
+    wChatId = new TextVar(variables, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+    props.setLook(wChatId);
+    wChatId.addModifyListener(lsMod);
+    FormData fdChatId = new FormData();
+    fdChatId.left = new FormAttachment(middle, 0);
+    fdChatId.top = new FormAttachment(wBotToken, margin);
+    fdChatId.right = new FormAttachment(100, 0);
+    wChatId.setLayoutData(fdChatId);
 
     // Some buttons
     wCancel = new Button(shell, SWT.PUSH);
@@ -170,7 +180,7 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     return SwtSvgImageUtil.getImage(
         shell.getDisplay(),
         getClass().getClassLoader(),
-        "sample.svg",
+        "transform.svg",
         ConstUi.LARGE_ICON_SIZE,
         ConstUi.LARGE_ICON_SIZE);
   }
@@ -179,7 +189,10 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
   public void getData() {
 
     // Get sample text and put it on dialog's text field
-    wSampleTextField.setText(input.getSampleText());
+    if (!Utils.isEmpty(input.getBotToken()))
+      wBotToken.setText(input.getBotToken());
+    if (!Utils.isEmpty(input.getChatId()))
+      wChatId.setText(input.getChatId());
 
     wTransformName.selectAll();
     wTransformName.setFocus();
@@ -192,7 +205,8 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
    */
   private void getInfo(TelegramBotMeta in) {
     // Save sample text content
-    input.setSampleText(wSampleTextField.getText());
+    input.setBotToken(wBotToken.getText());
+    input.setChatId(wChatId.getText());
   }
 
   /** Cancel the dialog. */
