@@ -25,6 +25,8 @@ import org.apache.hop.pipeline.transform.BaseTransformMeta;
 import org.apache.hop.pipeline.transform.ITransformDialog;
 import org.apache.hop.ui.core.ConstUi;
 import org.apache.hop.ui.core.dialog.BaseDialog;
+import org.apache.hop.ui.core.widget.ColumnInfo;
+import org.apache.hop.ui.core.widget.TableView;
 import org.apache.hop.ui.core.widget.TextVar;
 import org.apache.hop.ui.pipeline.transform.BaseTransformDialog;
 import org.apache.hop.ui.util.SwtSvgImageUtil;
@@ -44,6 +46,8 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
   private final TelegramBotMeta input;
   private TextVar wBotToken;
   private TextVar wChatId;
+  private ColumnInfo[] cmdArray;
+  private TableView wCommands;
 
   public TelegramBotDialog(
       Shell parent, IVariables variables, Object in, PipelineMeta pipelineMeta, String sname) {
@@ -87,26 +91,19 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     props.setLook(wlTransformName);
     fdlTransformName = new FormData();
     fdlTransformName.left = new FormAttachment(0, 0);
-    fdlTransformName.top = new FormAttachment(0, 0);
+    fdlTransformName.right = new FormAttachment(middle, -margin);
+    fdlTransformName.top = new FormAttachment(0, margin);
     wlTransformName.setLayoutData(fdlTransformName);
-
     wTransformName = new Text(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
     wTransformName.setText(transformName);
     props.setLook(wTransformName);
     wTransformName.addModifyListener(lsMod);
     fdTransformName = new FormData();
     fdTransformName.width = 150;
-    fdTransformName.left = new FormAttachment(0, 0);
-    fdTransformName.top = new FormAttachment(wlTransformName, 5);
+    fdTransformName.left = new FormAttachment(middle, 0);
+    fdTransformName.top = new FormAttachment(0, margin);
+    fdTransformName.right = new FormAttachment(100, 0);
     wTransformName.setLayoutData(fdTransformName);
-
-    Label spacer = new Label(shell, SWT.HORIZONTAL | SWT.SEPARATOR);
-    FormData fdSpacer = new FormData();
-    fdSpacer.height = 2;
-    fdSpacer.left = new FormAttachment(0, 0);
-    fdSpacer.top = new FormAttachment(wTransformName, 15);
-    fdSpacer.right = new FormAttachment(100, 0);
-    spacer.setLayoutData(fdSpacer);
 
     // BotToken
     Label wlBotToken = new Label(shell, SWT.RIGHT);
@@ -114,7 +111,7 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     props.setLook(wlBotToken);
     FormData fdlBotToken = new FormData();
     fdlBotToken.left = new FormAttachment(0, 0);
-    fdlBotToken.top = new FormAttachment(spacer, margin);
+    fdlBotToken.top = new FormAttachment(wTransformName, margin);
     fdlBotToken.right = new FormAttachment(middle, -margin);
     wlBotToken.setLayoutData(fdlBotToken);
 
@@ -123,7 +120,7 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     wBotToken.addModifyListener(lsMod);
     FormData fdBotToken = new FormData();
     fdBotToken.left = new FormAttachment(middle, 0);
-    fdBotToken.top = new FormAttachment(spacer, margin);
+    fdBotToken.top = new FormAttachment(wTransformName, margin);
     fdBotToken.right = new FormAttachment(100, 0);
     wBotToken.setLayoutData(fdBotToken);
 
@@ -145,6 +142,48 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     fdChatId.top = new FormAttachment(wBotToken, margin);
     fdChatId.right = new FormAttachment(100, 0);
     wChatId.setLayoutData(fdChatId);
+
+
+    Label wlCommandList = new Label(shell, SWT.NONE);
+    wlCommandList.setText(BaseMessages.getString(PKG, "TelegramBot.Commands.Label"));
+    props.setLook(wlCommandList);
+    FormData fdlCommandList = new FormData();
+    fdlCommandList.left = new FormAttachment(0, 0);
+    fdlCommandList.top = new FormAttachment(wChatId, margin);
+    wlCommandList.setLayoutData(fdlCommandList);
+
+    int nrKeyCols = 2;
+    int nrKeyRows = (input.getCmdItems() != null ? input.getCmdItems().size() : 1);
+
+    cmdArray = new ColumnInfo[nrKeyCols];
+    cmdArray[0] =
+            new ColumnInfo(
+                    BaseMessages.getString(PKG, "TelegramBot.Commands.Command.Column"),
+                    ColumnInfo.COLUMN_TYPE_TEXT,
+                    false);
+    cmdArray[1] =
+            new ColumnInfo(
+                    BaseMessages.getString(PKG, "TelegramBot.Commands.Pipeline.Column"),
+                    ColumnInfo.COLUMN_TYPE_TEXT,
+                    false);
+
+    wCommands =
+            new TableView(
+                    variables,
+                    shell,
+                    SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL,
+                    cmdArray,
+                    nrKeyRows,
+                    lsMod,
+                    props);
+
+
+    FormData fdCommandList = new FormData();
+    fdCommandList.left = new FormAttachment(0, 0);
+    fdCommandList.top = new FormAttachment(wlCommandList, margin);
+    fdCommandList.right = new FormAttachment(100, -margin);
+    fdCommandList.bottom = new FormAttachment(100, -40);
+    wCommands.setLayoutData(fdCommandList);
 
     // Some buttons
     wCancel = new Button(shell, SWT.PUSH);
