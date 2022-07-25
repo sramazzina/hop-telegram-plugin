@@ -53,8 +53,7 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
       injectionKeyDescription = "TelegramBot.Injection.ChatID.Description")
   private String chatId;
 
-  @HopMetadataProperty(key = "cmdItem",
-          injectionKeyDescription = "TelegramBot.Injection.ChatID.Description")
+  @HopMetadataProperty(key = "cmdItem", groupKey = "cmdItems")
   List<TelegramBotCmdItem> cmdItems;
 
   public List<TelegramBotCmdItem> getCmdItems() {

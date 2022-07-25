@@ -143,7 +143,6 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     fdChatId.right = new FormAttachment(100, 0);
     wChatId.setLayoutData(fdChatId);
 
-
     Label wlCommandList = new Label(shell, SWT.NONE);
     wlCommandList.setText(BaseMessages.getString(PKG, "TelegramBot.Commands.Label"));
     props.setLook(wlCommandList);
@@ -157,26 +156,28 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
 
     cmdArray = new ColumnInfo[nrKeyCols];
     cmdArray[0] =
-            new ColumnInfo(
-                    BaseMessages.getString(PKG, "TelegramBot.Commands.Command.Column"),
-                    ColumnInfo.COLUMN_TYPE_TEXT,
-                    false);
+        new ColumnInfo(
+            BaseMessages.getString(PKG, "TelegramBot.Commands.Command.Column"),
+            ColumnInfo.COLUMN_TYPE_TEXT,
+            false);
+    cmdArray[0].setUsingVariables(true);
+
     cmdArray[1] =
-            new ColumnInfo(
-                    BaseMessages.getString(PKG, "TelegramBot.Commands.Pipeline.Column"),
-                    ColumnInfo.COLUMN_TYPE_TEXT,
-                    false);
+        new ColumnInfo(
+            BaseMessages.getString(PKG, "TelegramBot.Commands.Pipeline.Column"),
+            ColumnInfo.COLUMN_TYPE_TEXT,
+            false);
+    cmdArray[1].setUsingVariables(true);
 
     wCommands =
-            new TableView(
-                    variables,
-                    shell,
-                    SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL,
-                    cmdArray,
-                    nrKeyRows,
-                    lsMod,
-                    props);
-
+        new TableView(
+            variables,
+            shell,
+            SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL,
+            cmdArray,
+            nrKeyRows,
+            lsMod,
+            props);
 
     FormData fdCommandList = new FormData();
     fdCommandList.left = new FormAttachment(0, 0);
@@ -215,23 +216,25 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     return transformName;
   }
 
-  private Image getImage() {
-    return SwtSvgImageUtil.getImage(
-        shell.getDisplay(),
-        getClass().getClassLoader(),
-        "transform.svg",
-        ConstUi.LARGE_ICON_SIZE,
-        ConstUi.LARGE_ICON_SIZE);
-  }
-
   /** Copy information from the meta-data input to the dialog fields. */
   public void getData() {
 
     // Get sample text and put it on dialog's text field
-    if (!Utils.isEmpty(input.getBotToken()))
-      wBotToken.setText(input.getBotToken());
-    if (!Utils.isEmpty(input.getChatId()))
-      wChatId.setText(input.getChatId());
+    if (!Utils.isEmpty(input.getBotToken())) wBotToken.setText(input.getBotToken());
+    if (!Utils.isEmpty(input.getChatId())) wChatId.setText(input.getChatId());
+
+    if (input.getCmdItems() != null) {
+      for (int i = 0; i < input.getCmdItems().size(); i++) {
+        TableItem item = wCommands.table.getItem(i);
+        if (input.getCmdItems().get(i) != null) {
+          item.setText(1, input.getCmdItems().get(i).getCommandString());
+          item.setText(2, input.getCmdItems().get(i).getPipelineToStart());
+        }
+      }
+    }
+
+    wCommands.setRowNums();
+    wCommands.optWidth(true);
 
     wTransformName.selectAll();
     wTransformName.setFocus();
@@ -246,6 +249,14 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     // Save sample text content
     input.setBotToken(wBotToken.getText());
     input.setChatId(wChatId.getText());
+
+    input.getCmdItems().clear();
+
+    int sizeCmdItems = wCommands.nrNonEmpty();
+    for (int i = 0; i < sizeCmdItems; i++) {
+      TableItem item = wCommands.getNonEmpty(i);
+      input.getCmdItems().add(new TelegramBotCmdItem(item.getText(1), item.getText(2)));
+    }
   }
 
   /** Cancel the dialog. */
