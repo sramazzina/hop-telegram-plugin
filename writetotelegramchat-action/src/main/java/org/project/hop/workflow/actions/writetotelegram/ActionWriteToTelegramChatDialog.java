@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.project.hop.workflow.actions.sample;
+package org.project.hop.workflow.actions.writetotelegram;
 
 import org.apache.hop.core.Const;
 import org.apache.hop.core.Props;

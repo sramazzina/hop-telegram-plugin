@@ -15,16 +15,15 @@
  * limitations under the License.
  */
 
-package org.project.hop.workflow.actions.sample;
+package org.project.hop.workflow.actions.writetotelegram;
 
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.response.SendResponse;
 import org.apache.hop.core.ICheckResult;
 import org.apache.hop.core.Result;
 import org.apache.hop.core.annotations.Action;
 import org.apache.hop.core.exception.HopXmlException;
-import org.apache.hop.core.logging.LogLevel;
 import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.core.xml.XmlHandler;
 import org.apache.hop.i18n.BaseMessages;
@@ -120,7 +119,9 @@ public class ActionWriteToTelegramChat extends ActionBase implements Cloneable, 
 // Create your bot passing the token received from @BotFather
     TelegramBot bot = new TelegramBot(botToken);
 
-    bot.execute(new SendMessage(chatId, chatMessage));
+    SendResponse res = bot.execute(new SendMessage(chatId, chatMessage));
+    if (!res.isOk())
+      logError("Got an error trying to write a message to a Telegram channel: " + res.description() );
     return result;
   }
 
