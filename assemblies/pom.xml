@@ -22,5 +22,6 @@
 
   <modules>
     <module>assemblies-writetotelegramchat-action</module>
+    <module>assemblies-telegrambot-transform</module>
   </modules>
 </project>

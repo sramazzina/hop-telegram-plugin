@@ -36,6 +36,7 @@
 
     <modules>
         <module>writetotelegramchat-action</module>
+        <module>telegrambot-transform</module>
         <module>assemblies</module>
     </modules>
 

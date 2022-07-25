@@ -1,11 +1,11 @@
 <assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3 http://maven.apache.org/xsd/assembly-1.1.3.xsd">
-    <id>writetotelegramchat-assembly</id>
+    <id>telegrambot-assembly</id>
     <formats>
         <format>zip</format>
     </formats>
-    <baseDirectory>plugins/actions/writetotelegramchat</baseDirectory>
+    <baseDirectory>plugins/transforms/telegrambot</baseDirectory>
     <files>
         <file>
             <source>${project.basedir}/src/main/resources/version.xml</source>
@@ -25,7 +25,7 @@
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
             <includes>
-                <include>org.project.hop:writetotelegramchat:jar</include>
+                <include>org.project.hop:telegrambot:jar:jar</include>
             </includes>
         </dependencySet>
         <dependencySet>
