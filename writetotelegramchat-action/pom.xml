@@ -9,9 +9,23 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <properties>
+        <ohttp3.version>4.9.0</ohttp3.version>
+        <ohttp3.logging-interceptor.version>4.9.0</ohttp3.logging-interceptor.version>
+        <kotlin-stdlib.version>1.4.10</kotlin-stdlib.version>
+        <okio.version>2.8.0</okio.version>
+    </properties>
+
     <artifactId>writetotelegramchat</artifactId>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <configuration>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -68,6 +82,31 @@
             <groupId>com.github.pengrad</groupId>
             <artifactId>java-telegram-bot-api</artifactId>
             <version>6.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>${ohttp3.version}/version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>logging-interceptor</artifactId>
+            <version>${ohttp3.logging-interceptor.version}</version>
+       </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin-stdlib.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
+            <version>${kotlin-stdlib.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okio</groupId>
+            <artifactId>okio</artifactId>
+            <version>${okio.version}</version>
         </dependency>
     </dependencies>
 </project>

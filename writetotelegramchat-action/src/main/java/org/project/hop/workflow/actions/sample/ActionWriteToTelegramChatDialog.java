@@ -48,6 +48,7 @@ public class ActionWriteToTelegramChatDialog extends ActionDialog implements IAc
   private boolean changed;
 
   private Text wName;
+  private TextVar wBotToken;
   private TextVar wChatId;
   private TextVar wChatMessage;
 
@@ -113,13 +114,32 @@ public class ActionWriteToTelegramChatDialog extends ActionDialog implements IAc
     fdName.right = new FormAttachment(100, 0);
     wName.setLayoutData(fdName);
 
+    // BotToken
+    Label wlBotToken = new Label(shell, SWT.RIGHT);
+    wlBotToken.setText(BaseMessages.getString(PKG, "WriteToTelgramChatAction.BotToken.Label"));
+    props.setLook(wlBotToken);
+    FormData fdlBotToken = new FormData();
+    fdlBotToken.left = new FormAttachment(0, 0);
+    fdlBotToken.top = new FormAttachment(wName, margin);
+    fdlBotToken.right = new FormAttachment(middle, -margin);
+    wlBotToken.setLayoutData(fdlBotToken);
+
+    wBotToken = new TextVar(variables, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+    props.setLook(wBotToken);
+    wBotToken.addModifyListener(lsMod);
+    FormData fdBotToken = new FormData();
+    fdBotToken.left = new FormAttachment(middle, 0);
+    fdBotToken.top = new FormAttachment(wName, margin);
+    fdBotToken.right = new FormAttachment(100, 0);
+    wBotToken.setLayoutData(fdBotToken);
+
     // Chat ID
     Label wlChatId = new Label(shell, SWT.RIGHT);
     wlChatId.setText(BaseMessages.getString(PKG, "WriteToTelgramChatAction.ChatID.Label"));
     props.setLook(wlChatId);
     FormData fdlChatId = new FormData();
     fdlChatId.left = new FormAttachment(0, 0);
-    fdlChatId.top = new FormAttachment(wName, margin);
+    fdlChatId.top = new FormAttachment(wBotToken, margin);
     fdlChatId.right = new FormAttachment(middle, -margin);
     wlChatId.setLayoutData(fdlChatId);
 
@@ -128,7 +148,7 @@ public class ActionWriteToTelegramChatDialog extends ActionDialog implements IAc
     wChatId.addModifyListener(lsMod);
     FormData fdChatId = new FormData();
     fdChatId.left = new FormAttachment(middle, 0);
-    fdChatId.top = new FormAttachment(wName, margin);
+    fdChatId.top = new FormAttachment(wBotToken, margin);
     fdChatId.right = new FormAttachment(100, 0);
     wChatId.setLayoutData(fdChatId);
 
@@ -177,6 +197,7 @@ public class ActionWriteToTelegramChatDialog extends ActionDialog implements IAc
   /** Copy information from the meta-data input to the dialog fields. */
   public void getData() {
     wName.setText(Const.nullToEmpty(action.getName()));
+    wBotToken.setText(Const.nullToEmpty(action.getBotToken()));
     wChatId.setText(Const.nullToEmpty(action.getChatId()));
     wChatMessage.setText(Const.nullToEmpty(action.getChatMessage()));
 
@@ -199,6 +220,7 @@ public class ActionWriteToTelegramChatDialog extends ActionDialog implements IAc
       return;
     }
     action.setName(wName.getText());
+    action.setBotToken(wBotToken.getText());
     action.setChatId(wChatId.getText());
     action.setChatMessage(wChatMessage.getText());
     dispose();

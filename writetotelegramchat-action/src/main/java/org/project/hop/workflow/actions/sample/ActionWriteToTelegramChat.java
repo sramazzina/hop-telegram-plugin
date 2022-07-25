@@ -17,6 +17,9 @@
 
 package org.project.hop.workflow.actions.sample;
 
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.UpdatesListener;
+import com.pengrad.telegrambot.request.SendMessage;
 import org.apache.hop.core.ICheckResult;
 import org.apache.hop.core.Result;
 import org.apache.hop.core.annotations.Action;
@@ -44,12 +47,14 @@ public class ActionWriteToTelegramChat extends ActionBase implements Cloneable, 
 
   private static final Class<?> PKG = ActionWriteToTelegramChat.class; // Needed by Translator
 
+  private String botToken;
   private String chatId;
   private String chatMessage;
 
   public ActionWriteToTelegramChat(String name) {
     super(name, "");
 
+    botToken = null;
     chatId = null;
     chatMessage = null;
   }
@@ -74,6 +79,7 @@ public class ActionWriteToTelegramChat extends ActionBase implements Cloneable, 
 
     retval.append(super.getXml());
     // example value to xml
+    retval.append("      ").append(XmlHandler.addTagValue("botToken", botToken));
     retval.append("      ").append(XmlHandler.addTagValue("chatId", chatId));
     retval.append("      ").append(XmlHandler.addTagValue("chatMessage", chatMessage));
 
@@ -92,6 +98,8 @@ public class ActionWriteToTelegramChat extends ActionBase implements Cloneable, 
       throws HopXmlException {
     try {
       super.loadXml(entrynode);
+
+      botToken = XmlHandler.getTagValue(entrynode, "botToken");
       chatId = XmlHandler.getTagValue(entrynode, "chatId");
       chatMessage = XmlHandler.getTagValue(entrynode, "chatMessage");
     } catch (Exception e) {
@@ -109,7 +117,10 @@ public class ActionWriteToTelegramChat extends ActionBase implements Cloneable, 
    */
   @Override
   public Result execute(Result result, int nr) {
+// Create your bot passing the token received from @BotFather
+    TelegramBot bot = new TelegramBot(botToken);
 
+    bot.execute(new SendMessage(chatId, chatMessage));
     return result;
   }
 
@@ -142,5 +153,13 @@ public class ActionWriteToTelegramChat extends ActionBase implements Cloneable, 
 
   public void setChatMessage(String chatMessage) {
     this.chatMessage = chatMessage;
+  }
+
+  public String getBotToken() {
+    return botToken;
+  }
+
+  public void setBotToken(String botToken) {
+    this.botToken = botToken;
   }
 }

@@ -28,5 +28,17 @@
                 <include>org.project.hop:writetotelegramchat:jar</include>
             </includes>
         </dependencySet>
+        <dependencySet>
+            <useProjectArtifact>false</useProjectArtifact>
+            <outputDirectory>lib</outputDirectory>
+            <includes>
+                <include>com.github.pengrad:java-telegram-bot-api:jar</include>
+                <include>com.squareup.okhttp3:okhttp:jar</include>
+                <include>com.squareup.okhttp3:logging-interceptor:jar</include>
+                <include>org.jetbrains.kotlin:kotlin-runtime:jar</include>
+                <include>org.jetbrains.kotlin:kotlin-stdlib:jar</include>
+                <include>com.squareup.okio:okio:jar</include>
+            </includes>
+        </dependencySet>
     </dependencySets>
 </assembly>
