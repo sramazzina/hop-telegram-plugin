@@ -50,11 +50,30 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
   private String botToken;
 
   @HopMetadataProperty(
-      injectionKeyDescription = "TelegramBot.Injection.ChatID.Description")
+      injectionKeyDescription = "TelegramBot.Injection.ChatId.Description")
   private String chatId;
+
+  @HopMetadataProperty(
+          injectionKeyDescription = "TelegramBot.Injection.EnableCommands.Description")
+  private boolean enableCommands;
 
   @HopMetadataProperty(key = "cmdItem", groupKey = "cmdItems")
   List<TelegramBotCmdItem> cmdItems;
+
+  @HopMetadataProperty(
+          injectionKeyDescription = "TelegramBot.Injection.EnableNotifications.Description")
+  private boolean enableNotifications;
+
+  @HopMetadataProperty(
+          injectionKeyDescription = "TelegramBot.Injection.NotificationHeader.Description")
+  private String notificationHeaderText;
+
+  @HopMetadataProperty(
+          injectionKeyDescription = "TelegramBot.Injection.NotificationFooter.Description")
+  private String notificationFooterText;
+
+  @HopMetadataProperty(key = "fieldItem", groupKey = "fieldItems")
+  List<TelegramBotFieldItem> fieldItems;
 
   public List<TelegramBotCmdItem> getCmdItems() {
     return cmdItems;
@@ -78,6 +97,46 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
 
   public void setChatId(String chatId) {
     this.chatId = chatId;
+  }
+
+  public boolean isEnableCommands() {
+    return enableCommands;
+  }
+
+  public void setEnableCommands(boolean enableCommands) {
+    this.enableCommands = enableCommands;
+  }
+
+  public boolean isEnableNotifications() {
+    return enableNotifications;
+  }
+
+  public void setEnableNotifications(boolean enableNotifications) {
+    this.enableNotifications = enableNotifications;
+  }
+
+  public List<TelegramBotFieldItem> getFieldItems() {
+    return fieldItems;
+  }
+
+  public void setFieldItems(List<TelegramBotFieldItem> fieldItems) {
+    this.fieldItems = fieldItems;
+  }
+
+  public String getNotificationHeaderText() {
+    return notificationHeaderText;
+  }
+
+  public void setNotificationHeaderText(String notificationHeaderText) {
+    this.notificationHeaderText = notificationHeaderText;
+  }
+
+  public String getNotificationFooterText() {
+    return notificationFooterText;
+  }
+
+  public void setNotificationFooterText(String notificationFooterText) {
+    this.notificationFooterText = notificationFooterText;
   }
 
   @Override
