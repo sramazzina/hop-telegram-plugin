@@ -40,9 +40,6 @@
         <module>assemblies</module>
     </modules>
 
-
-
-
     <!-- needed for correct SWT libs dependending on system -->
     <profiles>
         <profile>

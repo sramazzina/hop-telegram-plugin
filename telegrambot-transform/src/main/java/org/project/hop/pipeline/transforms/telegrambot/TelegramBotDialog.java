@@ -17,6 +17,7 @@
 
 package org.project.hop.pipeline.transforms.telegrambot;
 
+import org.apache.hop.core.Props;
 import org.apache.hop.core.util.Utils;
 import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.i18n.BaseMessages;
@@ -31,6 +32,8 @@ import org.apache.hop.ui.core.widget.TextVar;
 import org.apache.hop.ui.pipeline.transform.BaseTransformDialog;
 import org.apache.hop.ui.util.SwtSvgImageUtil;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -48,6 +51,7 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
   private TextVar wChatId;
   private ColumnInfo[] cmdArray;
   private TableView wCommands;
+  private CTabFolder wTabFolder;
 
   public TelegramBotDialog(
       Shell parent, IVariables variables, Object in, PipelineMeta pipelineMeta, String sname) {
@@ -84,6 +88,23 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
 
     shell.setLayout(formLayout);
     shell.setText(BaseMessages.getString(PKG, "TelegramBot.Shell.Title"));
+
+    // Some buttons
+    wCancel = new Button(shell, SWT.PUSH);
+    wCancel.setText(BaseMessages.getString(PKG, "System.Button.Cancel"));
+    FormData fdCancel = new FormData();
+    fdCancel.right = new FormAttachment(100, 0);
+    fdCancel.bottom = new FormAttachment(100, 0);
+    wCancel.addListener(SWT.Selection, e -> cancel());
+    wCancel.setLayoutData(fdCancel);
+
+    wOk = new Button(shell, SWT.PUSH);
+    wOk.setText(BaseMessages.getString(PKG, "System.Button.OK"));
+    FormData fdOk = new FormData();
+    fdOk.right = new FormAttachment(wCancel, -5);
+    fdOk.bottom = new FormAttachment(100, 0);
+    wOk.setLayoutData(fdOk);
+    wOk.addListener(SWT.Selection, e -> ok());
 
     // TransformName line
     wlTransformName = new Label(shell, SWT.RIGHT);
@@ -143,67 +164,29 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     fdChatId.right = new FormAttachment(100, 0);
     wChatId.setLayoutData(fdChatId);
 
-    Label wlCommandList = new Label(shell, SWT.NONE);
-    wlCommandList.setText(BaseMessages.getString(PKG, "TelegramBot.Commands.Label"));
-    props.setLook(wlCommandList);
-    FormData fdlCommandList = new FormData();
-    fdlCommandList.left = new FormAttachment(0, 0);
-    fdlCommandList.top = new FormAttachment(wChatId, margin);
-    wlCommandList.setLayoutData(fdlCommandList);
+    wTabFolder = new CTabFolder(shell, SWT.BORDER);
+    props.setLook(wTabFolder, Props.WIDGET_STYLE_TAB);
 
-    int nrKeyCols = 2;
-    int nrKeyRows = (input.getCmdItems() != null ? input.getCmdItems().size() : 1);
+    addCommandTab(margin, middle, lsMod);
 
-    cmdArray = new ColumnInfo[nrKeyCols];
-    cmdArray[0] =
-        new ColumnInfo(
-            BaseMessages.getString(PKG, "TelegramBot.Commands.Command.Column"),
-            ColumnInfo.COLUMN_TYPE_TEXT,
-            false);
-    cmdArray[0].setUsingVariables(true);
+    FormData fdTabFolder = new FormData();
+    fdTabFolder.left = new FormAttachment(0, 0);
+    fdTabFolder.right = new FormAttachment(100, 0);
+    fdTabFolder.top = new FormAttachment(wChatId, margin);
+    fdTabFolder.bottom = new FormAttachment(wOk, -margin);
+    wTabFolder.setLayoutData(fdTabFolder);
 
-    cmdArray[1] =
-        new ColumnInfo(
-            BaseMessages.getString(PKG, "TelegramBot.Commands.Pipeline.Column"),
-            ColumnInfo.COLUMN_TYPE_TEXT,
-            false);
-    cmdArray[1].setUsingVariables(true);
+    FormData fdComp = new FormData();
+    fdComp.left = new FormAttachment(0, 0);
+    fdComp.top = new FormAttachment(0, 0);
+    fdComp.right = new FormAttachment(100, 0);
+    fdComp.bottom = new FormAttachment(100, 0);
+    shell.setLayoutData(fdComp);
 
-    wCommands =
-        new TableView(
-            variables,
-            shell,
-            SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL,
-            cmdArray,
-            nrKeyRows,
-            lsMod,
-            props);
-
-    FormData fdCommandList = new FormData();
-    fdCommandList.left = new FormAttachment(0, 0);
-    fdCommandList.top = new FormAttachment(wlCommandList, margin);
-    fdCommandList.right = new FormAttachment(100, -margin);
-    fdCommandList.bottom = new FormAttachment(100, -40);
-    wCommands.setLayoutData(fdCommandList);
-
-    // Some buttons
-    wCancel = new Button(shell, SWT.PUSH);
-    wCancel.setText(BaseMessages.getString(PKG, "System.Button.Cancel"));
-    FormData fdCancel = new FormData();
-    fdCancel.right = new FormAttachment(100, 0);
-    fdCancel.bottom = new FormAttachment(100, 0);
-    wCancel.addListener(SWT.Selection, e -> cancel());
-    wCancel.setLayoutData(fdCancel);
-
-    wOk = new Button(shell, SWT.PUSH);
-    wOk.setText(BaseMessages.getString(PKG, "System.Button.OK"));
-    FormData fdOk = new FormData();
-    fdOk.right = new FormAttachment(wCancel, -5);
-    fdOk.bottom = new FormAttachment(100, 0);
-    wOk.setLayoutData(fdOk);
-    wOk.addListener(SWT.Selection, e -> ok());
+    shell.pack();
 
     setButtonPositions(new Button[] {wOk, wCancel}, margin, null);
+    wTabFolder.setSelection(0);
 
     // Set the shell size, based upon previous time...
     setSize();
@@ -214,6 +197,74 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     BaseDialog.defaultShellHandling(shell, c -> ok(), c -> cancel());
 
     return transformName;
+  }
+
+  private void addCommandTab(int margin, int middle, ModifyListener lsMod) {
+
+    CTabItem wCommandTab = new CTabItem(wTabFolder, SWT.NONE);
+    wCommandTab.setText(BaseMessages.getString(PKG, "TelegramBot.CommandsTab.CTabItem"));
+
+    FormLayout commandLayout = new FormLayout();
+    commandLayout.marginWidth = 3;
+    commandLayout.marginHeight = 3;
+
+    Composite wCommandComp = new Composite(wTabFolder, SWT.NONE);
+    props.setLook(wCommandComp);
+    wCommandComp.setLayout(commandLayout);
+
+
+    Label wlCommandList = new Label(wCommandComp, SWT.NONE);
+    wlCommandList.setText(BaseMessages.getString(PKG, "TelegramBot.Commands.Label"));
+    props.setLook(wlCommandList);
+    FormData fdlCommandList = new FormData();
+    fdlCommandList.left = new FormAttachment(0, 0);
+    fdlCommandList.top = new FormAttachment(0, margin);
+    wlCommandList.setLayoutData(fdlCommandList);
+
+    int nrKeyCols = 2;
+    int nrKeyRows = (input.getCmdItems() != null ? input.getCmdItems().size() : 1);
+
+    cmdArray = new ColumnInfo[nrKeyCols];
+    cmdArray[0] =
+            new ColumnInfo(
+                    BaseMessages.getString(PKG, "TelegramBot.Commands.Command.Column"),
+                    ColumnInfo.COLUMN_TYPE_TEXT,
+                    false);
+    cmdArray[0].setUsingVariables(true);
+
+    cmdArray[1] =
+            new ColumnInfo(
+                    BaseMessages.getString(PKG, "TelegramBot.Commands.Pipeline.Column"),
+                    ColumnInfo.COLUMN_TYPE_TEXT,
+                    false);
+    cmdArray[1].setUsingVariables(true);
+
+    wCommands =
+            new TableView(
+                    variables,
+                    wCommandComp,
+                    SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL,
+                    cmdArray,
+                    nrKeyRows,
+                    lsMod,
+                    props);
+
+    FormData fdCommandList = new FormData();
+    fdCommandList.left = new FormAttachment(0, 0);
+    fdCommandList.top = new FormAttachment(wlCommandList, margin);
+    fdCommandList.right = new FormAttachment(100, -margin);
+    fdCommandList.bottom = new FormAttachment(100, -margin);
+    wCommands.setLayoutData(fdCommandList);
+
+    FormData fdCommandComp = new FormData();
+    fdCommandComp.left = new FormAttachment(0, 0);
+    fdCommandComp.top = new FormAttachment(0, 0);
+    fdCommandComp.right = new FormAttachment(100, 0);
+    fdCommandComp.bottom = new FormAttachment(100, 0);
+    wCommandComp.setLayoutData(fdCommandComp);
+
+    wCommandComp.layout();
+    wCommandTab.setControl(wCommandComp);
   }
 
   /** Copy information from the meta-data input to the dialog fields. */
