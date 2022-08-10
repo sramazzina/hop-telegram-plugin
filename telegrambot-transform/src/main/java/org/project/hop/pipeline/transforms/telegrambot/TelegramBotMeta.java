@@ -58,7 +58,7 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
   private boolean enableCommands;
 
   @HopMetadataProperty(key = "cmdItem", groupKey = "cmdItems")
-  List<TelegramBotCmdItem> cmdItems;
+  private List<TelegramBotCmdItem> cmdItems;
 
   @HopMetadataProperty(
           injectionKeyDescription = "TelegramBot.Injection.EnableNotifications.Description")
@@ -73,7 +73,7 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
   private String notificationFooterText;
 
   @HopMetadataProperty(key = "fieldItem", groupKey = "fieldItems")
-  List<TelegramBotFieldItem> fieldItems;
+  private List<TelegramBotFieldItem> fieldItems;
 
   public List<TelegramBotCmdItem> getCmdItems() {
     return cmdItems;
@@ -139,21 +139,6 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
     this.notificationFooterText = notificationFooterText;
   }
 
-  @Override
-  public void getFields(
-      IRowMeta rowMeta,
-      String name,
-      IRowMeta[] info,
-      TransformMeta nextTransform,
-      IVariables variables,
-      IHopMetadataProvider metadataProvider)
-      throws HopTransformException {
-    // Add new
-    IValueMeta vm = new ValueMetaString(SAMPLE_TEXT_FIELD_NAME);
-    vm.setOrigin(getParentTransformMeta().getName());
-
-    rowMeta.addValueMeta(vm);
-  }
 
   @Override
   public void check(

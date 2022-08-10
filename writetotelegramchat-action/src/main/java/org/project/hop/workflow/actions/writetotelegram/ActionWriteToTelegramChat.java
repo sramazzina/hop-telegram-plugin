@@ -18,12 +18,14 @@
 package org.project.hop.workflow.actions.writetotelegram;
 
 import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.SendResponse;
 import org.apache.hop.core.ICheckResult;
 import org.apache.hop.core.Result;
 import org.apache.hop.core.annotations.Action;
 import org.apache.hop.core.exception.HopXmlException;
+import org.apache.hop.core.util.Utils;
 import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.core.xml.XmlHandler;
 import org.apache.hop.i18n.BaseMessages;
@@ -31,6 +33,8 @@ import org.apache.hop.metadata.api.IHopMetadataProvider;
 import org.apache.hop.workflow.WorkflowMeta;
 import org.apache.hop.workflow.action.ActionBase;
 import org.apache.hop.workflow.action.IAction;
+import org.apache.hop.workflow.action.validator.ActionValidatorUtils;
+import org.apache.hop.workflow.action.validator.AndValidator;
 import org.w3c.dom.Node;
 
 import java.util.List;
@@ -116,12 +120,23 @@ public class ActionWriteToTelegramChat extends ActionBase implements Cloneable, 
    */
   @Override
   public Result execute(Result result, int nr) {
-// Create your bot passing the token received from @BotFather
+
+    // Create your bot passing the token received from @BotFather
     TelegramBot bot = new TelegramBot(botToken);
 
-    SendResponse res = bot.execute(new SendMessage(chatId, chatMessage));
-    if (!res.isOk())
-      logError("Got an error trying to write a message to a Telegram channel: " + res.description() );
+    SendResponse res =
+        bot.execute((new SendMessage(chatId, chatMessage)).parseMode(ParseMode.MarkdownV2));
+    if (!res.isOk()) {
+      logError("Unable to write a message to a Telegram chat: " + res.description());
+      result.setNrErrors(1);
+    }
+
+    if (result.getNrErrors() == 0) {
+      result.setResult(true);
+    } else {
+      result.setResult(false);
+    }
+
     return result;
   }
 
@@ -138,7 +153,23 @@ public class ActionWriteToTelegramChat extends ActionBase implements Cloneable, 
       List<ICheckResult> remarks,
       WorkflowMeta workflowMeta,
       IVariables variables,
-      IHopMetadataProvider metadataProvider) {}
+      IHopMetadataProvider metadataProvider) {
+
+    ActionValidatorUtils.andValidator()
+            .validate(
+                    this,
+                    "botToken",
+                    remarks,
+                    AndValidator.putValidators(ActionValidatorUtils.notBlankValidator()));
+
+    ActionValidatorUtils.andValidator()
+            .validate(
+                    this,
+                    "chatId",
+                    remarks,
+                    AndValidator.putValidators(ActionValidatorUtils.notBlankValidator()));
+
+  }
 
   public String getChatId() {
     return chatId;
