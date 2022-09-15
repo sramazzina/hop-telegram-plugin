@@ -17,8 +17,13 @@
 
 package org.project.hop.pipeline.transforms.telegrambot;
 
+import com.pengrad.telegrambot.Callback;
+import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.ParseMode;
+import com.pengrad.telegrambot.request.GetUpdates;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.response.GetUpdatesResponse;
 import com.pengrad.telegrambot.response.SendResponse;
 import org.apache.hop.core.exception.HopException;
 import org.apache.hop.core.exception.HopTransformException;
@@ -28,6 +33,7 @@ import org.apache.hop.pipeline.PipelineMeta;
 import org.apache.hop.pipeline.transform.BaseTransform;
 import org.apache.hop.pipeline.transform.TransformMeta;
 
+import java.io.IOException;
 import java.util.List;
 
 /** Transform That contains the basic skeleton needed to create your own plugin */
@@ -35,6 +41,7 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
 
   private static final Class<?> PKG = TelegramBot.class; // Needed by Translator
   private static final String ROW_SEPARATOR = "\n";
+  private boolean endLoop = false;
 
   public TelegramBot(
       TransformMeta transformMeta,
@@ -60,26 +67,80 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
       first = false;
     }
 
-    data.outputRowMeta = getInputRowMeta().clone();
-
     if (meta.isEnableNotifications()) {
+
+      data.outputRowMeta = getInputRowMeta().clone();
       String message = buildMessageToSend(r);
-
-      // Create your bot passing the token received from @BotFather
-      com.pengrad.telegrambot.TelegramBot bot =
-          new com.pengrad.telegrambot.TelegramBot(meta.getBotToken());
-
-      SendResponse res = bot.execute((new SendMessage(meta.getChatId(), message)).parseMode(ParseMode.MarkdownV2));
+      SendResponse res =
+          data.bot.execute(
+              (new SendMessage(meta.getChatId(), message)).parseMode(ParseMode.MarkdownV2));
 
       if (!res.isOk())
         throw new HopException(
             "Unable to write a message to a Telegram chat: " + res.description());
+      putRow(data.outputRowMeta, r); // return your data
+
     } else {
 
+      long delay = 2000L;
+
+      while (!endLoop) {
+        GetUpdates getUpdates = new GetUpdates().limit(10).offset(data.startingOffset).timeout(0);
+
+        data.bot.execute(
+            getUpdates,
+            new Callback<GetUpdates, GetUpdatesResponse>() {
+
+              @Override
+              public void onResponse(GetUpdates request, GetUpdatesResponse response) {
+                int currentMessageId = 0;
+                List<Update> updates = response.updates();
+                if (updates.size() > 0) {
+                  for (Update u : updates) {
+                    if (u.message() != null) {
+                      Message m = u.message();
+                      logBasic("Message received: " + u.message().text()
+                              + " Message id: "
+                              + m.messageId());
+                    } else if (u.channelPost() != null) {
+                      Message m = u.channelPost();
+                      logBasic(
+                          "ChannelPost message received: "
+                              + m.text()
+                              + " Message id: "
+                              + m.messageId());
+                      List<TelegramBotCmdItem> cmdItems = meta.getCmdItems();
+                      for (TelegramBotCmdItem item : cmdItems) {
+                        if (item.getCommandString().equals(m.text())) {
+                          executePipeline(item.getPipelineToStart());
+                        }
+                      }
+                    }
+                    currentMessageId = u.updateId();
+                  }
+                }
+                // Set new starting offset for next interaction
+                data.startingOffset = currentMessageId + 1;
+              }
+
+              @Override
+              public void onFailure(GetUpdates request, IOException e) {}
+            });
+        try {
+          Thread.sleep(delay);
+        } catch (InterruptedException e) {
+          endLoop = true;
+          break;
+        }
+      }
     }
 
-    putRow(data.outputRowMeta, r); // return your data
     return true;
+  }
+
+  private void executePipeline(String pipelineToStart) {
+
+
   }
 
   private String buildMessageToSend(Object[] r) throws HopTransformException {
@@ -87,9 +148,7 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
     StringBuffer messageToSend = new StringBuffer();
 
     if (!Utils.isEmpty(meta.getNotificationHeaderText())) {
-      messageToSend
-          .append(meta.getNotificationHeaderText())
-          .append(ROW_SEPARATOR);
+      messageToSend.append(meta.getNotificationHeaderText()).append(ROW_SEPARATOR);
     }
     for (TelegramBotFieldItem item : items) {
 
@@ -122,12 +181,21 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
         return false;
       }
 
-      if (meta.isEnableCommands()) {
-        // TODO perform pipelines initialization
-
+      // Create your bot passing the token received from @BotFather
+      data.bot = new com.pengrad.telegrambot.TelegramBot(meta.getBotToken());
+      if (data.bot == null) {
+        logError("Error while trying to initialize a TelegramBot for token: " + meta.getBotToken());
+        return false;
       }
+      data.startingOffset = 0;
       return true;
     }
     return false;
+  }
+
+  @Override
+  public void stopRunning() throws HopException {
+    endLoop = true;
+    super.stopRunning();
   }
 }

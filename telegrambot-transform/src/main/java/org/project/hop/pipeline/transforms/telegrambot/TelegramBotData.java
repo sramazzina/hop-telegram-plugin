@@ -21,11 +21,15 @@ import org.apache.hop.core.row.IRowMeta;
 import org.apache.hop.pipeline.transform.BaseTransformData;
 import org.apache.hop.pipeline.transform.ITransformData;
 
+import java.util.Timer;
+
 public class TelegramBotData extends BaseTransformData implements ITransformData {
   /** Default constructor for TelegramBotData. */
   public TelegramBotData() {
     super();
   }
-
+  public com.pengrad.telegrambot.TelegramBot bot;
+  public Timer botExecutionTimer;
   public IRowMeta outputRowMeta;
+  public int startingOffset;
 }
