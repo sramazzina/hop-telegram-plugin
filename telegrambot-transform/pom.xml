@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
+        <pengrad.telegram.api.version>6.2.0</pengrad.telegram.api.version>
         <ohttp3.version>4.9.0</ohttp3.version>
         <ohttp3.logging-interceptor.version>4.9.0</ohttp3.logging-interceptor.version>
         <kotlin-stdlib.version>1.4.10</kotlin-stdlib.version>
@@ -75,7 +76,7 @@
         <dependency>
             <groupId>com.github.pengrad</groupId>
             <artifactId>java-telegram-bot-api</artifactId>
-            <version>6.1.0</version>
+            <version>${pengrad.telegram.api.version}</version>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
