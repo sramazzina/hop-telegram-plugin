@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <pipeline>
   <info>
-    <name>sample1</name>
+    <name>sample-notification</name>
     <name_sync_with_filename>Y</name_sync_with_filename>
     <description/>
     <extended_description/>
@@ -71,8 +71,8 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <botToken>5423077522:AAHMIcM_aq6Yt7JweS9h_z7J1P4y2hufEnU</botToken>
-    <chatId>-1001418678489</chatId>
+    <botToken/>
+    <chatId/>
     <cmdItems>
 </cmdItems>
     <enableCommands>N</enableCommands>

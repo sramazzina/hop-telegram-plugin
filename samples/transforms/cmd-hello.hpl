@@ -51,15 +51,11 @@
     </partitioning>
     <fields>
       <field>
-        <currency/>
-        <decimal/>
         <set_empty_string>N</set_empty_string>
-        <format/>
         <length>-1</length>
         <name>BotAnswer</name>
         <precision>-1</precision>
         <type>String</type>
-        <group/>
         <nullif>Hello Sergio I'm Apache Hop\. What can I do for you?</nullif>
       </field>
     </fields>
@@ -123,8 +119,8 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <botToken>5423077522:AAHMIcM_aq6Yt7JweS9h_z7J1P4y2hufEnU</botToken>
-    <chatId>-1001418678489</chatId>
+    <botToken/>
+    <chatId/>
     <cmdItems>
 </cmdItems>
     <enableCommands>N</enableCommands>
@@ -134,6 +130,8 @@
         <fieldName>BotAnswer</fieldName>
       </fieldItem>
     </fieldItems>
+    <notificationFooterText/>
+    <notificationHeaderText/>
     <omitFieldName>Y</omitFieldName>
     <attributes/>
     <GUI>

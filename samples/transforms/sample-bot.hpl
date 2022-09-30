@@ -56,8 +56,8 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <botToken>5423077522:AAHMIcM_aq6Yt7JweS9h_z7J1P4y2hufEnU</botToken>
-    <chatId>-1001418678489</chatId>
+    <botToken/>
+    <chatId/>
     <cmdItems>
       <cmdItem>
         <commandString>/hello</commandString>
