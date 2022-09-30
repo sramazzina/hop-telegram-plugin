@@ -75,6 +75,10 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
       injectionKeyDescription = "TelegramBot.Injection.NotificationFooter.Description")
   private String notificationFooterText;
 
+  @HopMetadataProperty(
+          injectionKeyDescription = "TelegramBot.Injection.Commands.HelpHeader.Description")
+  private String commandsHelpHeaderText;
+
   @HopMetadataProperty(key = "fieldItem", groupKey = "fieldItems")
   private List<TelegramBotFieldItem> fieldItems;
 
@@ -92,6 +96,14 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
 
   public void setOmitFieldName(boolean omitFieldName) {
     this.omitFieldName = omitFieldName;
+  }
+
+  public String getCommandsHelpHeaderText() {
+    return commandsHelpHeaderText;
+  }
+
+  public void setCommandsHelpHeaderText(String commandsHelpHeaderText) {
+    this.commandsHelpHeaderText = commandsHelpHeaderText;
   }
 
   public String getBotToken() {

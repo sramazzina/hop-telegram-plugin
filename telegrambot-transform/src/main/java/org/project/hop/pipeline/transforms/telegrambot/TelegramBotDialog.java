@@ -17,6 +17,7 @@
 
 package org.project.hop.pipeline.transforms.telegrambot;
 
+import org.apache.hop.core.Const;
 import org.apache.hop.core.Props;
 import org.apache.hop.core.exception.HopException;
 import org.apache.hop.core.row.IRowMeta;
@@ -60,8 +61,10 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
   private Button wGet;
   private Label wlHeader;
   private Label wlFooter;
+  private Label wlHelpHeader;
   private StyledTextComp wHeader;
   private StyledTextComp wFooter;
+  private StyledTextComp wHelpHeader;
 
   public TelegramBotDialog(
       Shell parent, IVariables variables, Object in, PipelineMeta pipelineMeta, String sname) {
@@ -190,7 +193,7 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     shell.pack();
 
     setButtonPositions(new Button[] {wOk, wCancel}, margin, null);
-    wTabFolder.setSelection(0);
+    wTabFolder.setSelection(input.isEnableNotifications() ? 0 : 1);
 
     // Set the shell size, based upon previous time...
     setSize();
@@ -226,7 +229,29 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     fdEnableCommand.top = new FormAttachment(0, margin);
     wEnableCommand.setLayoutData(fdEnableCommand);
 
-    int nrKeyCols = 2;
+    wlHelpHeader = new Label(wCommandComp, SWT.RIGHT);
+    wlHelpHeader.setText(BaseMessages.getString(PKG, "TelegramBot.Commands.HelpHeader.Label"));
+    props.setLook(wlHelpHeader);
+    FormData fdlHelpHeader = new FormData();
+    fdlHelpHeader.left = new FormAttachment(0, 0);
+    fdlHelpHeader.top = new FormAttachment(wEnableCommand, margin);
+    wlHelpHeader.setLayoutData(fdlHelpHeader);
+
+    wHelpHeader =
+            new StyledTextComp(
+                    variables,
+                    wCommandComp,
+                    SWT.MULTI | SWT.LEFT | SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
+    props.setLook(wHelpHeader, Props.WIDGET_STYLE_FIXED);
+    wHelpHeader.addModifyListener(lsMod);
+    FormData fdHelpHeader = new FormData();
+    fdHelpHeader.left = new FormAttachment(0, 0);
+    fdHelpHeader.right = new FormAttachment(100, 0);
+    fdHelpHeader.top = new FormAttachment(wlHelpHeader, margin);
+    fdHelpHeader.height = (int) (60 * props.getZoomFactor());
+    wHelpHeader.setLayoutData(fdHelpHeader);
+
+    int nrKeyCols = 3;
     int nrKeyRows = (input.getCmdItems() != null ? input.getCmdItems().size() : 1);
 
     cmdArray = new ColumnInfo[nrKeyCols];
@@ -244,6 +269,13 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
             false);
     cmdArray[1].setUsingVariables(true);
 
+    cmdArray[2] =
+        new ColumnInfo(
+            BaseMessages.getString(PKG, "TelegramBot.Commands.Description.Column"),
+            ColumnInfo.COLUMN_TYPE_TEXT,
+            false);
+    cmdArray[2].setUsingVariables(true);
+
     wCommands =
         new TableView(
             variables,
@@ -258,7 +290,7 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
 
     FormData fdCommandList = new FormData();
     fdCommandList.left = new FormAttachment(0, 0);
-    fdCommandList.top = new FormAttachment(wEnableCommand, margin);
+    fdCommandList.top = new FormAttachment(wHelpHeader, margin);
     fdCommandList.right = new FormAttachment(100, -margin);
     fdCommandList.bottom = new FormAttachment(100, -margin);
     wCommands.setLayoutData(fdCommandList);
@@ -305,12 +337,11 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     wEnableNotification.setLayoutData(fdEnableNotification);
 
     wOmitFieldName = new Button(wNotificationComp, SWT.CHECK);
-    wOmitFieldName.setText(
-            BaseMessages.getString(PKG, "TelegramBot.OmitFieldName.Label"));
+    wOmitFieldName.setText(BaseMessages.getString(PKG, "TelegramBot.OmitFieldName.Label"));
     props.setLook(wOmitFieldName);
     FormData fdOmitFieldName = new FormData();
     fdOmitFieldName.left = new FormAttachment(0, 0);
-    fdOmitFieldName.top = new FormAttachment(wEnableNotification,  margin);
+    fdOmitFieldName.top = new FormAttachment(wEnableNotification, margin);
     wOmitFieldName.setLayoutData(fdOmitFieldName);
 
     wlHeader = new Label(wNotificationComp, SWT.RIGHT);
@@ -328,12 +359,12 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
             SWT.MULTI | SWT.LEFT | SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
     props.setLook(wHeader, Props.WIDGET_STYLE_FIXED);
     wHeader.addModifyListener(lsMod);
-    FormData fdLogMessage = new FormData();
-    fdLogMessage.left = new FormAttachment(0, 0);
-    fdLogMessage.right = new FormAttachment(100, 0);
-    fdLogMessage.top = new FormAttachment(wlHeader, margin);
-    fdLogMessage.height = (int) (60 * props.getZoomFactor());
-    wHeader.setLayoutData(fdLogMessage);
+    FormData fdHeader = new FormData();
+    fdHeader.left = new FormAttachment(0, 0);
+    fdHeader.right = new FormAttachment(100, 0);
+    fdHeader.top = new FormAttachment(wlHeader, margin);
+    fdHeader.height = (int) (60 * props.getZoomFactor());
+    wHeader.setLayoutData(fdHeader);
 
     wlFooter = new Label(wNotificationComp, SWT.RIGHT);
     wlFooter.setText(BaseMessages.getString(PKG, "TelegramBot.Footer.Label"));
@@ -405,12 +436,12 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
         });
 
     wOmitFieldName.addSelectionListener(
-            new SelectionAdapter() {
-              @Override
-              public void widgetSelected(SelectionEvent arg0) {
-                input.setChanged();
-              }
-            });
+        new SelectionAdapter() {
+          @Override
+          public void widgetSelected(SelectionEvent arg0) {
+            input.setChanged();
+          }
+        });
 
     FormData fdNotificationsComp = new FormData();
     fdNotificationsComp.left = new FormAttachment(0, 0);
@@ -513,12 +544,15 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
 
     if (input.isEnableCommands()) {
       wEnableCommand.setSelection(input.isEnableCommands());
+      if (!Utils.isEmpty(input.getCommandsHelpHeaderText()))
+      wHelpHeader.setText(input.getCommandsHelpHeaderText());
       if (input.getCmdItems() != null) {
         for (int i = 0; i < input.getCmdItems().size(); i++) {
           TableItem item = wCommands.table.getItem(i);
           if (input.getCmdItems().get(i) != null) {
             item.setText(1, input.getCmdItems().get(i).getCommandString());
             item.setText(2, input.getCmdItems().get(i).getPipelineToStart());
+            item.setText(3, Const.NVL(input.getCmdItems().get(i).getCommandDescription(), ""));
           }
         }
       }
@@ -561,12 +595,15 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     input.setBotToken(wBotToken.getText());
     input.setChatId(wChatId.getText());
     input.setEnableCommands(wEnableCommand.getSelection());
+    input.setCommandsHelpHeaderText(wHelpHeader.getText());
     input.getCmdItems().clear();
 
     int sizeCmdItems = wCommands.nrNonEmpty();
     for (int i = 0; i < sizeCmdItems; i++) {
       TableItem item = wCommands.getNonEmpty(i);
-      input.getCmdItems().add(new TelegramBotCmdItem(item.getText(1), item.getText(2)));
+      input
+          .getCmdItems()
+          .add(new TelegramBotCmdItem(item.getText(1), item.getText(2), item.getText(3)));
     }
 
     input.setEnableNotifications(wEnableNotification.getSelection());

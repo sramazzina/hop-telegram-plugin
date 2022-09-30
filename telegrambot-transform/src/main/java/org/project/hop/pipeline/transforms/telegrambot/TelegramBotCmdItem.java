@@ -20,19 +20,24 @@ package org.project.hop.pipeline.transforms.telegrambot;
 
 import org.apache.hop.metadata.api.HopMetadataProperty;
 
+import java.util.Objects;
+
 public class TelegramBotCmdItem {
 
     @HopMetadataProperty
     private String commandString;
+    @HopMetadataProperty
+    private String commandDescription;
     @HopMetadataProperty
     private String pipelineToStart;
 
     public TelegramBotCmdItem() {
     }
 
-    public TelegramBotCmdItem(String commandString, String pipelineToStart) {
+    public TelegramBotCmdItem(String commandString, String pipelineToStart, String commandDescription) {
         this.commandString = commandString;
         this.pipelineToStart = pipelineToStart;
+        this.commandDescription = commandDescription;
     }
 
     public String getCommandString() {
@@ -49,5 +54,35 @@ public class TelegramBotCmdItem {
 
     public void setPipelineToStart(String pipelineToStart) {
         this.pipelineToStart = pipelineToStart;
+    }
+
+    public String getCommandDescription() {
+        return commandDescription;
+    }
+
+    public void setCommandDescription(String commandDescription) {
+        this.commandDescription = commandDescription;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TelegramBotCmdItem that = (TelegramBotCmdItem) o;
+        return commandString.equals(that.commandString) && Objects.equals(commandDescription, that.commandDescription) && pipelineToStart.equals(that.pipelineToStart);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(commandString, commandDescription, pipelineToStart);
+    }
+
+    @Override
+    public String toString() {
+        return "TelegramBotCmdItem{" +
+                "commandString='" + commandString + '\'' +
+                ", commandDescription='" + commandDescription + '\'' +
+                ", pipelineToStart='" + pipelineToStart + '\'' +
+                '}';
     }
 }

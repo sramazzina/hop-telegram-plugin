@@ -119,8 +119,8 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <botToken/>
-    <chatId/>
+    <botToken>${bot.token}</botToken>
+    <chatId>${chat.id}</chatId>
     <cmdItems>
 </cmdItems>
     <enableCommands>N</enableCommands>

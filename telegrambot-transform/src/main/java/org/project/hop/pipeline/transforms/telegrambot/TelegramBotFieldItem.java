@@ -20,6 +20,8 @@ package org.project.hop.pipeline.transforms.telegrambot;
 
 import org.apache.hop.metadata.api.HopMetadataProperty;
 
+import java.util.Objects;
+
 public class TelegramBotFieldItem {
 
     @HopMetadataProperty
@@ -38,5 +40,25 @@ public class TelegramBotFieldItem {
 
     public void setFieldName(String fieldName) {
         this.fieldName = fieldName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TelegramBotFieldItem that = (TelegramBotFieldItem) o;
+        return fieldName.equals(that.fieldName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fieldName);
+    }
+
+    @Override
+    public String toString() {
+        return "TelegramBotFieldItem{" +
+                "fieldName='" + fieldName + '\'' +
+                '}';
     }
 }

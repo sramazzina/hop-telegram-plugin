@@ -32,7 +32,6 @@ public class TelegramBotData extends BaseTransformData implements ITransformData
     super();
   }
   public com.pengrad.telegrambot.TelegramBot bot;
-  public Timer botExecutionTimer;
   public RowProducer rowProducer;
   public HashMap<String, SingleThreadedPipelineExecutor> eMap;
   public IRowMeta outputRowMeta;

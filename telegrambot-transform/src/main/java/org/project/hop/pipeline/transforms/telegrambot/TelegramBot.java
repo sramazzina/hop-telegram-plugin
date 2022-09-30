@@ -43,10 +43,7 @@ import org.apache.hop.pipeline.transform.TransformMeta;
 import org.apache.hop.pipeline.transforms.injector.InjectorMeta;
 
 import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /** Transform That contains the basic skeleton needed to create your own plugin */
 public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData> {
@@ -86,16 +83,16 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
       String message = buildMessageToSend(r);
 
       int msgIdPos = data.outputRowMeta.indexOfValue("MessageId");
-      SendMessage msg = new SendMessage(meta.getChatId(), message);
-      //      if (msgIdPos > -1) {
-      //        msg.replyToMessageId(((Integer) r[msgIdPos]).intValue());
-      //      }
+      SendMessage msg = new SendMessage(variables.resolve(meta.getChatId()), message);
+      if (msgIdPos > -1) {
+        msg.replyToMessageId(((Integer) r[msgIdPos]).intValue());
+      }
 
       SendResponse res = data.bot.execute(msg.parseMode(ParseMode.MarkdownV2));
 
       if (!res.isOk())
         throw new HopException(
-            "Unable to write a message to a Telegram chat: " + res.description());
+            "Unable to send a message to Telegram: " + res.description());
       putRow(data.outputRowMeta, r); // return your data
 
     } else {
@@ -149,16 +146,30 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
           logBasic("ChannelPost message received: " + m.text() + " Message id: " + m.messageId());
           List<TelegramBotCmdItem> cmdItems = meta.getCmdItems();
 
-          for (TelegramBotCmdItem item : cmdItems) {
+          Iterator<TelegramBotCmdItem> itemIterator = cmdItems.iterator();
+
+          boolean processed = false;
+          while (itemIterator.hasNext() && !processed)  {
+
+            TelegramBotCmdItem item = itemIterator.next();
+
             boolean pipelineInitialized = false;
-            // String cmd = item.getCommandString();
             String cmd = meta.extractCommandFromMessage(m);
-            if (cmd.equals(item.getCommandString())) {
+            if (cmd.equals("/help")){
+              String message = buildHelpMsg();
+              SendMessage msg = new SendMessage(variables.resolve(meta.getChatId()), message);
+              SendResponse res = data.bot.execute(msg.parseMode(ParseMode.MarkdownV2));
+
+              if (!res.isOk())
+                throw new HopException(
+                        "Unable to send a commands' list message to Telegram: " + res.description());
+              processed = true;
+            } else if (cmd.equals(item.getCommandString())) {
               if (data.eMap.get(cmd) == null) {
                 initProcessingPipeline(item.getPipelineToStart(), cmd);
               }
-
               pipelineInitialized = true;
+              processed = true;
             }
 
             if (pipelineInitialized) {
@@ -170,20 +181,6 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
                 throw new HopException("Error while retrieving executor for command " + cmd);
 
               executor.oneIteration();
-
-              // Test code
-              /*
-                          SendMessage msg =
-                              new SendMessage(meta.getChatId(), "Request processed\\!")
-                                  .parseMode(ParseMode.MarkdownV2)
-                                  .replyToMessageId(m.messageId())
-                                  .replyMarkup(new ForceReply());
-                          SendResponse res = data.bot.execute(msg);
-
-                          if (!res.isOk())
-                            throw new HopException(
-                                "Unable to write a message to a Telegram chat: " + res.description());
-              */
             }
           }
         }
@@ -325,6 +322,27 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
     return messageToSend.toString();
   }
 
+  private String buildHelpMsg() throws HopTransformException {
+
+    List<TelegramBotCmdItem> cmdsAvailable = meta.getCmdItems();
+    StringBuffer messageToSend = new StringBuffer();
+
+    if (!Utils.isEmpty(meta.getCommandsHelpHeaderText())) {
+      messageToSend.append(meta.getCommandsHelpHeaderText()).append(ROW_SEPARATOR);
+    }
+
+    for (TelegramBotCmdItem tCmd : cmdsAvailable) {
+      if (messageToSend.length() > 0) messageToSend.append(ROW_SEPARATOR);
+      messageToSend
+          .append("*")
+          .append(tCmd.getCommandString())
+          .append("* \\- ")
+          .append(tCmd.getCommandDescription());
+    }
+
+    return messageToSend.toString();
+  }
+
   @Override
   public boolean init() {
     if (super.init()) {
@@ -339,9 +357,11 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
       }
 
       // Create your bot passing the token received from @BotFather
-      data.bot = new com.pengrad.telegrambot.TelegramBot(meta.getBotToken());
+      data.bot = new com.pengrad.telegrambot.TelegramBot(variables.resolve(meta.getBotToken()));
       if (data.bot == null) {
-        logError("Error while trying to initialize a TelegramBot for token: " + meta.getBotToken());
+        logError(
+            "Error while trying to initialize a TelegramBot for token: "
+                + variables.resolve(meta.getBotToken()));
         return false;
       }
 

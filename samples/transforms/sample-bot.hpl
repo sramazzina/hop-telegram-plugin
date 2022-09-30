@@ -56,14 +56,21 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <botToken/>
-    <chatId/>
+    <botToken>${bot.token}</botToken>
+    <chatId>${chat.id}</chatId>
     <cmdItems>
       <cmdItem>
+        <commandDescription>Returns a bot\'s Hello message</commandDescription>
         <commandString>/hello</commandString>
         <pipelineToStart>${PROJECT_HOME}/transforms/cmd-hello.hpl</pipelineToStart>
       </cmdItem>
+      <cmdItem>
+        <commandDescription>Get's a list of the nearby gas station with prices</commandDescription>
+        <commandString>/GetGasolinePrices</commandString>
+        <pipelineToStart>${PROJECT_HOME}/transforms/cmd-gasoline-prices.hpl</pipelineToStart>
+      </cmdItem>
     </cmdItems>
+    <commandsHelpHeaderText>This is the help header message for the sample Apache Hop Telegram\'s bot</commandsHelpHeaderText>
     <enableCommands>Y</enableCommands>
     <enableNotifications>N</enableNotifications>
     <fieldItems>
