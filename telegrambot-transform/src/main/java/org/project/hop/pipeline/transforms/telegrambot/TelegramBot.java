@@ -25,16 +25,28 @@ import com.pengrad.telegrambot.request.GetUpdates;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.GetUpdatesResponse;
 import com.pengrad.telegrambot.response.SendResponse;
+import org.apache.hop.core.Result;
 import org.apache.hop.core.exception.HopException;
+import org.apache.hop.core.exception.HopMissingPluginsException;
 import org.apache.hop.core.exception.HopTransformException;
+import org.apache.hop.core.exception.HopXmlException;
+import org.apache.hop.core.row.RowDataUtil;
 import org.apache.hop.core.util.Utils;
 import org.apache.hop.pipeline.Pipeline;
 import org.apache.hop.pipeline.PipelineMeta;
+import org.apache.hop.pipeline.SingleThreadedPipelineExecutor;
+import org.apache.hop.pipeline.TransformWithMappingMeta;
+import org.apache.hop.pipeline.engines.local.LocalPipelineEngine;
 import org.apache.hop.pipeline.transform.BaseTransform;
+import org.apache.hop.pipeline.transform.ITransformMeta;
 import org.apache.hop.pipeline.transform.TransformMeta;
+import org.apache.hop.pipeline.transforms.injector.InjectorMeta;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /** Transform That contains the basic skeleton needed to create your own plugin */
 public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData> {
@@ -58,12 +70,13 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
 
     Object[] r = getRow(); // Get row from input rowset & set row busy!
 
-    if (r == null) { // no more input to be expected...
+    if (meta.isEnableNotifications() && r == null) { // no more input to be expected...
       setOutputDone();
       return false;
     }
 
-    if (first) { // use this block to do some processing that is only needed 1 time
+    if (meta.isEnableNotifications()
+        && first) { // use this block to do some processing that is only needed 1 time
       first = false;
     }
 
@@ -71,9 +84,14 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
 
       data.outputRowMeta = getInputRowMeta().clone();
       String message = buildMessageToSend(r);
-      SendResponse res =
-          data.bot.execute(
-              (new SendMessage(meta.getChatId(), message)).parseMode(ParseMode.MarkdownV2));
+
+      int msgIdPos = data.outputRowMeta.indexOfValue("MessageId");
+      SendMessage msg = new SendMessage(meta.getChatId(), message);
+      //      if (msgIdPos > -1) {
+      //        msg.replyToMessageId(((Integer) r[msgIdPos]).intValue());
+      //      }
+
+      SendResponse res = data.bot.execute(msg.parseMode(ParseMode.MarkdownV2));
 
       if (!res.isOk())
         throw new HopException(
@@ -93,39 +111,20 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
 
               @Override
               public void onResponse(GetUpdates request, GetUpdatesResponse response) {
-                int currentMessageId = 0;
                 List<Update> updates = response.updates();
-                if (updates.size() > 0) {
-                  for (Update u : updates) {
-                    if (u.message() != null) {
-                      Message m = u.message();
-                      logBasic("Message received: " + u.message().text()
-                              + " Message id: "
-                              + m.messageId());
-                    } else if (u.channelPost() != null) {
-                      Message m = u.channelPost();
-                      logBasic(
-                          "ChannelPost message received: "
-                              + m.text()
-                              + " Message id: "
-                              + m.messageId());
-                      List<TelegramBotCmdItem> cmdItems = meta.getCmdItems();
-                      for (TelegramBotCmdItem item : cmdItems) {
-                        if (item.getCommandString().equals(m.text())) {
-                          executePipeline(item.getPipelineToStart());
-                        }
-                      }
-                    }
-                    currentMessageId = u.updateId();
+                if (updates != null && updates.size() > 0) {
+                  try {
+                    processUpdates(updates);
+                  } catch (HopException e) {
+                    logError("An error occurred while processing Telegram updates", e);
                   }
                 }
-                // Set new starting offset for next interaction
-                data.startingOffset = currentMessageId + 1;
               }
 
               @Override
               public void onFailure(GetUpdates request, IOException e) {}
             });
+
         try {
           Thread.sleep(delay);
         } catch (InterruptedException e) {
@@ -138,9 +137,164 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
     return true;
   }
 
-  private void executePipeline(String pipelineToStart) {
+  private void processUpdates(List<Update> updates) throws HopException {
+    int currentMessageId = 0;
+    for (Update u : updates) {
+      if (u.message() != null) {
+        Message m = u.message();
+        logBasic("Message received: " + u.message().text() + " Message id: " + m.messageId());
+      } else if (u.channelPost() != null) {
+        Message m = u.channelPost();
+        if (m != null && m.text() != null) {
+          logBasic("ChannelPost message received: " + m.text() + " Message id: " + m.messageId());
+          List<TelegramBotCmdItem> cmdItems = meta.getCmdItems();
 
+          for (TelegramBotCmdItem item : cmdItems) {
+            boolean pipelineInitialized = false;
+            // String cmd = item.getCommandString();
+            String cmd = meta.extractCommandFromMessage(m);
+            if (cmd.equals(item.getCommandString())) {
+              if (data.eMap.get(cmd) == null) {
+                initProcessingPipeline(item.getPipelineToStart(), cmd);
+              }
 
+              pipelineInitialized = true;
+            }
+
+            if (pipelineInitialized) {
+              Object[] outputRow = processMessageAsRow(m);
+              data.rowProducer.putRow(data.outputRowMeta, outputRow);
+              incrementLinesInput();
+              SingleThreadedPipelineExecutor executor = data.eMap.get(cmd);
+              if (executor == null)
+                throw new HopException("Error while retrieving executor for command " + cmd);
+
+              executor.oneIteration();
+
+              // Test code
+              /*
+                          SendMessage msg =
+                              new SendMessage(meta.getChatId(), "Request processed\\!")
+                                  .parseMode(ParseMode.MarkdownV2)
+                                  .replyToMessageId(m.messageId())
+                                  .replyMarkup(new ForceReply());
+                          SendResponse res = data.bot.execute(msg);
+
+                          if (!res.isOk())
+                            throw new HopException(
+                                "Unable to write a message to a Telegram chat: " + res.description());
+              */
+            }
+          }
+        }
+      }
+      currentMessageId = u.updateId();
+    }
+    // Set new starting offset for next interaction
+    data.startingOffset = currentMessageId + 1;
+    logBasic(
+        "Increment starting offset - new offset to start gathering messages is "
+            + data.startingOffset);
+  }
+
+  public Object[] processMessageAsRow(Message m) {
+
+    Object[] rowData = RowDataUtil.allocateRowData(data.outputRowMeta.size());
+
+    int index = 0;
+    rowData[index++] = m.messageId();
+    rowData[index++] = m.text();
+    rowData[index++] = meta.extractCommandFromMessage(m);
+    rowData[index++] = meta.extractCommandArgsFromMessage(m);
+    rowData[index++] = m.chat().title();
+    rowData[index] = new Date();
+
+    return rowData;
+  }
+
+  private void initProcessingPipeline(String pipelineFilename, String cmd) {
+
+    try {
+      PipelineMeta subTransMeta =
+          new PipelineMeta(variables.resolve(pipelineFilename), metadataProvider, this);
+      subTransMeta.setMetadataProvider(metadataProvider);
+      subTransMeta.setFilename(pipelineFilename);
+      subTransMeta.setPipelineType(PipelineMeta.PipelineType.SingleThreaded);
+      logDetailed("Loaded processing pipeline '" + pipelineFilename + "'");
+
+      LocalPipelineEngine processingPipeline =
+          new LocalPipelineEngine(subTransMeta, this, getPipeline());
+      processingPipeline.prepareExecution();
+      processingPipeline.setLogLevel(getPipeline().getLogLevel());
+      processingPipeline.setPreviousResult(new Result());
+      TransformWithMappingMeta.replaceVariableValues(processingPipeline, this);
+      TransformWithMappingMeta.addMissingVariables(processingPipeline, this);
+      processingPipeline.activateParameters(processingPipeline);
+
+      logDetailed("Initialized sub-pipeline '" + pipelineFilename + "'");
+
+      // Find the Injector step as entry point to the processing pipeline
+      for (TransformMeta transformMeta : subTransMeta.getTransforms()) {
+        ITransformMeta iTransform = transformMeta.getTransform();
+        if (iTransform instanceof InjectorMeta) {
+          if (data.rowProducer != null) {
+            throw new HopException(
+                "You can only have one copy of the injector transform '"
+                    + transformMeta.getName()
+                    + "' to accept the telegram messages");
+          }
+          // Attach an injector to this transform
+          //
+          data.rowProducer = processingPipeline.addRowProducer(transformMeta.getName(), 0);
+        }
+      }
+
+      if (data.rowProducer == null) {
+        throw new HopException(
+            "Unable to find an Injector transform in the Kafka pipeline. Such a transform is needed to accept data from this Kafka Consumer transform.");
+      }
+
+      // See if we need to grab result records from the sub-pipeline...
+      //
+      //      if (StringUtils.isNotEmpty(meta.getSubTransform())) {
+      //        ITransform transform = processingPipeline.findRunThread(meta.getSubTransform());
+      //        if (transform == null) {
+      //          throw new HopException(
+      //                  "Unable to find transform '" + meta.getSubTransform() + "' to retrieve
+      // rows from");
+      //        }
+      //        transform.addRowListener(
+      //                new RowAdapter() {
+      //
+      //                  @Override
+      //                  public void rowWrittenEvent(IRowMeta rowMeta, Object[] row)
+      //                          throws HopTransformException {
+      //                    // Write this row to the next transform(s)
+      //                    //
+      //                    KafkaConsumerInput.this.putRow(rowMeta, row);
+      //                  }
+      //                });
+      //      }
+
+      processingPipeline.setLogChannel(getLogChannel());
+      processingPipeline.startThreads();
+
+      SingleThreadedPipelineExecutor executor =
+          new SingleThreadedPipelineExecutor(processingPipeline);
+      boolean ok = executor.init();
+      if (!ok) {
+        throw new HopException("Initialization of sub-pipeline failed");
+      }
+      getPipeline().addActiveSubPipeline(getTransformName(), processingPipeline);
+
+      data.eMap.put(cmd, executor);
+    } catch (HopXmlException e) {
+      e.printStackTrace();
+    } catch (HopMissingPluginsException e) {
+      e.printStackTrace();
+    } catch (HopException e) {
+      e.printStackTrace();
+    }
   }
 
   private String buildMessageToSend(Object[] r) throws HopTransformException {
@@ -150,12 +304,15 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
     if (!Utils.isEmpty(meta.getNotificationHeaderText())) {
       messageToSend.append(meta.getNotificationHeaderText()).append(ROW_SEPARATOR);
     }
+
     for (TelegramBotFieldItem item : items) {
-
       if (messageToSend.length() > 0) messageToSend.append(ROW_SEPARATOR);
-
       int itemValuePos = data.outputRowMeta.indexOfValue(item.getFieldName());
-      messageToSend.append("*").append(item.getFieldName()).append(":* ").append(r[itemValuePos]);
+      if (meta.isOmitFieldName()) {
+        messageToSend.append(r[itemValuePos]);
+      } else {
+        messageToSend.append("*").append(item.getFieldName()).append(":* ").append(r[itemValuePos]);
+      }
     }
 
     if (!Utils.isEmpty(meta.getNotificationFooterText())) {
@@ -187,6 +344,14 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
         logError("Error while trying to initialize a TelegramBot for token: " + meta.getBotToken());
         return false;
       }
+
+      try {
+        data.outputRowMeta = meta.getRowMeta(getTransformName(), this);
+      } catch (HopTransformException e) {
+        log.logError("Error determining output row metadata", e);
+      }
+
+      data.eMap = new HashMap<>();
       data.startingOffset = 0;
       return true;
     }
@@ -196,6 +361,12 @@ public class TelegramBot extends BaseTransform<TelegramBotMeta, TelegramBotData>
   @Override
   public void stopRunning() throws HopException {
     endLoop = true;
+    Set<String> keys = data.eMap.keySet();
+    for (String key : keys) {
+
+      SingleThreadedPipelineExecutor e = data.eMap.get(key);
+      e.getPipeline().stopAll();
+    }
     super.stopRunning();
   }
 }

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pipeline>
+  <info>
+    <name>cmd-hello</name>
+    <name_sync_with_filename>Y</name_sync_with_filename>
+    <description/>
+    <extended_description/>
+    <pipeline_version/>
+    <pipeline_type>Normal</pipeline_type>
+    <parameters>
+    </parameters>
+    <capture_transform_performance>N</capture_transform_performance>
+    <transform_performance_capturing_delay>1000</transform_performance_capturing_delay>
+    <transform_performance_capturing_size_limit>100</transform_performance_capturing_size_limit>
+    <created_user>-</created_user>
+    <created_date>2022/09/29 10:30:35.176</created_date>
+    <modified_user>-</modified_user>
+    <modified_date>2022/09/29 10:30:35.176</modified_date>
+    <key_for_session_key>H4sIAAAAAAAAAAMAAAAAAAAAAAA=</key_for_session_key>
+    <is_key_private>N</is_key_private>
+  </info>
+  <notepads>
+  </notepads>
+  <order>
+    <hop>
+      <from>Injector</from>
+      <to>Write to log</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Write to log</from>
+      <to>Add constants</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Add constants</from>
+      <to>Telegram Bot Transform</to>
+      <enabled>Y</enabled>
+    </hop>
+  </order>
+  <transform>
+    <name>Add constants</name>
+    <type>Constant</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <fields>
+      <field>
+        <currency/>
+        <decimal/>
+        <set_empty_string>N</set_empty_string>
+        <format/>
+        <length>-1</length>
+        <name>BotAnswer</name>
+        <precision>-1</precision>
+        <type>String</type>
+        <group/>
+        <nullif>Hello Sergio I'm Apache Hop\. What can I do for you?</nullif>
+      </field>
+    </fields>
+    <attributes/>
+    <GUI>
+      <xloc>672</xloc>
+      <yloc>192</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>Injector</name>
+    <type>Injector</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <fields>
+      <field>
+        <name>MessageId</name>
+        <type>Integer</type>
+      </field>
+      <field>
+        <name>MessageText</name>
+        <type>String</type>
+      </field>
+      <field>
+        <name>Command</name>
+        <type>String</type>
+      </field>
+      <field>
+        <name>CommandArguments</name>
+        <type>String</type>
+      </field>
+      <field>
+        <name>Channel</name>
+        <type>String</type>
+      </field>
+      <field>
+        <name>MessageTime</name>
+        <type>Date</type>
+      </field>
+    </fields>
+    <attributes/>
+    <GUI>
+      <xloc>272</xloc>
+      <yloc>192</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>Telegram Bot Transform</name>
+    <type>TelegramBot</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <botToken>5423077522:AAHMIcM_aq6Yt7JweS9h_z7J1P4y2hufEnU</botToken>
+    <chatId>-1001418678489</chatId>
+    <cmdItems>
+</cmdItems>
+    <enableCommands>N</enableCommands>
+    <enableNotifications>Y</enableNotifications>
+    <fieldItems>
+      <fieldItem>
+        <fieldName>BotAnswer</fieldName>
+      </fieldItem>
+    </fieldItems>
+    <omitFieldName>Y</omitFieldName>
+    <attributes/>
+    <GUI>
+      <xloc>864</xloc>
+      <yloc>192</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>Write to log</name>
+    <type>WriteToLog</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <loglevel>log_level_basic</loglevel>
+    <displayHeader>Y</displayHeader>
+    <limitRows>N</limitRows>
+    <limitRowsNumber>0</limitRowsNumber>
+    <logmessage>HELLO PIPELINE
+</logmessage>
+    <fields>
+      </fields>
+    <attributes/>
+    <GUI>
+      <xloc>480</xloc>
+      <yloc>192</yloc>
+    </GUI>
+  </transform>
+  <transform_error_handling>
+  </transform_error_handling>
+  <attributes/>
+</pipeline>

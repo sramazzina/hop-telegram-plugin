@@ -17,12 +17,14 @@
 
 package org.project.hop.pipeline.transforms.telegrambot;
 
+import com.pengrad.telegrambot.model.Message;
 import org.apache.hop.core.ICheckResult;
 import org.apache.hop.core.annotations.Transform;
 import org.apache.hop.core.exception.HopTransformException;
 import org.apache.hop.core.row.IRowMeta;
 import org.apache.hop.core.row.IValueMeta;
-import org.apache.hop.core.row.value.ValueMetaString;
+import org.apache.hop.core.row.RowMeta;
+import org.apache.hop.core.row.value.ValueMetaFactory;
 import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.metadata.api.HopMetadataProperty;
 import org.apache.hop.metadata.api.IHopMetadataProvider;
@@ -45,31 +47,32 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
   private static final Class<?> PKG = TelegramBotMeta.class; // Needed by Translator
   public static final String SAMPLE_TEXT_FIELD_NAME = "Value";
 
-  @HopMetadataProperty(
-      injectionKeyDescription = "TelegramBot.Injection.BotToken.Description")
+  @HopMetadataProperty(injectionKeyDescription = "TelegramBot.Injection.BotToken.Description")
   private String botToken;
 
-  @HopMetadataProperty(
-      injectionKeyDescription = "TelegramBot.Injection.ChatId.Description")
+  @HopMetadataProperty(injectionKeyDescription = "TelegramBot.Injection.ChatId.Description")
   private String chatId;
 
-  @HopMetadataProperty(
-          injectionKeyDescription = "TelegramBot.Injection.EnableCommands.Description")
+  @HopMetadataProperty(injectionKeyDescription = "TelegramBot.Injection.EnableCommands.Description")
   private boolean enableCommands;
 
   @HopMetadataProperty(key = "cmdItem", groupKey = "cmdItems")
   private List<TelegramBotCmdItem> cmdItems;
 
   @HopMetadataProperty(
-          injectionKeyDescription = "TelegramBot.Injection.EnableNotifications.Description")
+      injectionKeyDescription = "TelegramBot.Injection.EnableNotifications.Description")
   private boolean enableNotifications;
 
   @HopMetadataProperty(
-          injectionKeyDescription = "TelegramBot.Injection.NotificationHeader.Description")
+          injectionKeyDescription = "TelegramBot.Injection.OmitFieldName.Description")
+  private boolean omitFieldName;
+
+  @HopMetadataProperty(
+      injectionKeyDescription = "TelegramBot.Injection.NotificationHeader.Description")
   private String notificationHeaderText;
 
   @HopMetadataProperty(
-          injectionKeyDescription = "TelegramBot.Injection.NotificationFooter.Description")
+      injectionKeyDescription = "TelegramBot.Injection.NotificationFooter.Description")
   private String notificationFooterText;
 
   @HopMetadataProperty(key = "fieldItem", groupKey = "fieldItems")
@@ -81,6 +84,14 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
 
   public void setCmdItems(List<TelegramBotCmdItem> cmdItems) {
     this.cmdItems = cmdItems;
+  }
+
+  public boolean isOmitFieldName() {
+    return omitFieldName;
+  }
+
+  public void setOmitFieldName(boolean omitFieldName) {
+    this.omitFieldName = omitFieldName;
   }
 
   public String getBotToken() {
@@ -139,7 +150,6 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
     this.notificationFooterText = notificationFooterText;
   }
 
-
   @Override
   public void check(
       List<ICheckResult> remarks,
@@ -157,5 +167,41 @@ public class TelegramBotMeta extends BaseTransformMeta<TelegramBot, TelegramBotD
   @Override
   public void setDefault() {
     // Set default value for new sample text field
+  }
+
+  public RowMeta getRowMeta(String origin, IVariables variables) throws HopTransformException {
+    RowMeta rowMeta = new RowMeta();
+    putFieldOnRowMeta("MessageId", IValueMeta.TYPE_STRING, rowMeta, origin, variables);
+    putFieldOnRowMeta("Message", IValueMeta.TYPE_STRING, rowMeta, origin, variables);
+    putFieldOnRowMeta("Command", IValueMeta.TYPE_STRING, rowMeta, origin, variables);
+    putFieldOnRowMeta("CommandArguments", IValueMeta.TYPE_STRING, rowMeta, origin, variables);
+    putFieldOnRowMeta("ChannelName", IValueMeta.TYPE_STRING, rowMeta, origin, variables);
+    putFieldOnRowMeta("MessageTimestamp", IValueMeta.TYPE_DATE, rowMeta, origin, variables);
+    return rowMeta;
+  }
+
+  public String extractCommandFromMessage(Message m) {
+    return (m.text().indexOf(" ") > 0 && m.text().substring(0, m.text().indexOf(" ")) != null
+        ? m.text().substring(0, m.text().indexOf(" "))
+        : m.text());
+  }
+
+  public String extractCommandArgsFromMessage(Message m) {
+    return (m.text().indexOf(" ") > 0 && m.text().substring(m.text().indexOf(" ")+1, m.text().length()) != null
+            ? m.text().substring(m.text().indexOf(" "), m.text().length())
+            : null);
+  }
+
+  private void putFieldOnRowMeta(
+      String fieldName, int fieldType, IRowMeta rowMeta, String origin, IVariables variables)
+      throws HopTransformException {
+    try {
+      String value = variables.resolve(fieldName);
+      IValueMeta v = ValueMetaFactory.createValueMeta(value, fieldType);
+      v.setOrigin(origin);
+      rowMeta.addValueMeta(v);
+    } catch (Exception e) {
+      throw new HopTransformException("Unable to create ValueMeta");
+    }
   }
 }

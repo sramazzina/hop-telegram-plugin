@@ -18,9 +18,12 @@
 package org.project.hop.pipeline.transforms.telegrambot;
 
 import org.apache.hop.core.row.IRowMeta;
+import org.apache.hop.pipeline.RowProducer;
+import org.apache.hop.pipeline.SingleThreadedPipelineExecutor;
 import org.apache.hop.pipeline.transform.BaseTransformData;
 import org.apache.hop.pipeline.transform.ITransformData;
 
+import java.util.HashMap;
 import java.util.Timer;
 
 public class TelegramBotData extends BaseTransformData implements ITransformData {
@@ -30,6 +33,8 @@ public class TelegramBotData extends BaseTransformData implements ITransformData
   }
   public com.pengrad.telegrambot.TelegramBot bot;
   public Timer botExecutionTimer;
+  public RowProducer rowProducer;
+  public HashMap<String, SingleThreadedPipelineExecutor> eMap;
   public IRowMeta outputRowMeta;
   public int startingOffset;
 }
