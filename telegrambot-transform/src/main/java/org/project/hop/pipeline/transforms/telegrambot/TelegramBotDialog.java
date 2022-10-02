@@ -27,6 +27,7 @@ import org.apache.hop.i18n.BaseMessages;
 import org.apache.hop.pipeline.PipelineMeta;
 import org.apache.hop.pipeline.transform.BaseTransformMeta;
 import org.apache.hop.pipeline.transform.ITransformDialog;
+import org.apache.hop.pipeline.transform.TransformMeta;
 import org.apache.hop.ui.core.dialog.BaseDialog;
 import org.apache.hop.ui.core.dialog.ErrorDialog;
 import org.apache.hop.ui.core.widget.ColumnInfo;
@@ -45,13 +46,17 @@ import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.*;
 
+import java.util.*;
+import java.util.List;
+
 public class TelegramBotDialog extends BaseTransformDialog implements ITransformDialog {
   private static final Class<?> PKG = TelegramBotDialog.class; // Needed by Translator
 
   private final TelegramBotMeta input;
   private TextVar wBotToken;
   private TextVar wChatId;
-  private ColumnInfo[] cmdArray;
+  private ColumnInfo[] notificationEntriesArray;
+  private ColumnInfo[] cmdEntriesArray;
   private Button wEnableCommand;
   private Button wEnableNotification;
   private Button wOmitFieldName;
@@ -66,9 +71,12 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
   private StyledTextComp wFooter;
   private StyledTextComp wHelpHeader;
 
+  private final Map<String, Integer> inputFields;
+
   public TelegramBotDialog(
       Shell parent, IVariables variables, Object in, PipelineMeta pipelineMeta, String sname) {
     super(parent, variables, (BaseTransformMeta) in, pipelineMeta, sname);
+    inputFields = new HashMap<>();
     input = (TelegramBotMeta) in;
   }
 
@@ -254,34 +262,34 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     int nrKeyCols = 3;
     int nrKeyRows = (input.getCmdItems() != null ? input.getCmdItems().size() : 1);
 
-    cmdArray = new ColumnInfo[nrKeyCols];
-    cmdArray[0] =
+    cmdEntriesArray = new ColumnInfo[nrKeyCols];
+    cmdEntriesArray[0] =
         new ColumnInfo(
             BaseMessages.getString(PKG, "TelegramBot.Commands.Command.Column"),
             ColumnInfo.COLUMN_TYPE_TEXT,
             false);
-    cmdArray[0].setUsingVariables(true);
+    cmdEntriesArray[0].setUsingVariables(true);
 
-    cmdArray[1] =
+    cmdEntriesArray[1] =
         new ColumnInfo(
             BaseMessages.getString(PKG, "TelegramBot.Commands.Pipeline.Column"),
             ColumnInfo.COLUMN_TYPE_TEXT,
             false);
-    cmdArray[1].setUsingVariables(true);
+    cmdEntriesArray[1].setUsingVariables(true);
 
-    cmdArray[2] =
+    cmdEntriesArray[2] =
         new ColumnInfo(
             BaseMessages.getString(PKG, "TelegramBot.Commands.Description.Column"),
             ColumnInfo.COLUMN_TYPE_TEXT,
             false);
-    cmdArray[2].setUsingVariables(true);
+    cmdEntriesArray[2].setUsingVariables(true);
 
     wCommands =
         new TableView(
             variables,
             wCommandComp,
             SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL,
-            cmdArray,
+                cmdEntriesArray,
             nrKeyRows,
             lsMod,
             props);
@@ -391,8 +399,8 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
     int nrKeyCols = 1;
     int nrKeyRows = (input.getFieldItems() != null ? input.getFieldItems().size() : 1);
 
-    cmdArray = new ColumnInfo[nrKeyCols];
-    cmdArray[0] =
+    notificationEntriesArray = new ColumnInfo[nrKeyCols];
+    notificationEntriesArray[0] =
         new ColumnInfo(
             BaseMessages.getString(PKG, "TelegramBot.Notifications.Field.Column"),
             ColumnInfo.COLUMN_TYPE_CCOMBO,
@@ -404,7 +412,7 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
             variables,
             wNotificationComp,
             SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL,
-            cmdArray,
+                notificationEntriesArray,
             nrKeyRows,
             lsMod,
             props);
@@ -452,8 +460,50 @@ public class TelegramBotDialog extends BaseTransformDialog implements ITransform
 
     wNotificationComp.layout();
     wNotificationTab.setControl(wNotificationComp);
+
+
+    //
+    // Search the fields in the background
+    //
+
+    final Runnable runnable =
+            () -> {
+              TransformMeta transformMeta = pipelineMeta.findTransform(transformName);
+              if (transformMeta != null) {
+                try {
+                  IRowMeta row = pipelineMeta.getPrevTransformFields(variables, transformMeta);
+
+                  // Remember these fields...
+                  for (int i = 0; i < row.size(); i++) {
+                    inputFields.put(row.getValueMeta(i).getName(), i);
+                  }
+
+                  setComboBoxes();
+                } catch (HopException e) {
+                  logError(BaseMessages.getString(PKG, "System.Dialog.GetFieldsFailed.Message"));
+                }
+              }
+            };
+    new Thread(runnable).start();
+
   }
 
+  protected void setComboBoxes() {
+    // Something was changed in the row.
+    //
+    final Map<String, Integer> fields = new HashMap<>();
+
+    // Add the currentMeta fields...
+    fields.putAll(inputFields);
+
+    Set<String> keySet = fields.keySet();
+    List<String> entries = new ArrayList<>(keySet);
+
+    String[] fieldNames = entries.toArray(new String[entries.size()]);
+    Const.sortStrings(fieldNames);
+    // Key fields
+    notificationEntriesArray[0].setComboValues(fieldNames);
+  }
   private void changeCommandsTabControlsStatus() {
     if (wEnableNotification.getSelection()) {
       MessageBox mb = new MessageBox(shell, SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);

@@ -34,7 +34,7 @@
     </hop>
     <hop>
       <from>Add constants</from>
-      <to>Telegram Bot Transform</to>
+      <to>Sed Hello Reply</to>
       <enabled>Y</enabled>
     </hop>
   </order>
@@ -109,7 +109,7 @@
     </GUI>
   </transform>
   <transform>
-    <name>Telegram Bot Transform</name>
+    <name>Sed Hello Reply</name>
     <type>TelegramBot</type>
     <description/>
     <distribute>Y</distribute>
@@ -123,6 +123,7 @@
     <chatId>${chat.id}</chatId>
     <cmdItems>
 </cmdItems>
+    <commandsHelpHeaderText/>
     <enableCommands>N</enableCommands>
     <enableNotifications>Y</enableNotifications>
     <fieldItems>
