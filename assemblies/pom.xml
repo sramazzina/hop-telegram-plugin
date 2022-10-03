@@ -5,7 +5,7 @@
 
   <groupId>org.project.hop</groupId>
   <artifactId>hop-telegram-plugin-assemblies</artifactId>
-  <version>2.1.0-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Hop Telegram Plugin Assemblies</name>
@@ -13,7 +13,7 @@
   <parent>
     <groupId>org.project.hop</groupId>
     <artifactId>hop-telegram-plugin</artifactId>
-    <version>2.1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <properties>
